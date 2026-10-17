@@ -6,6 +6,9 @@
 <meta name="robots" content="noindex,nofollow">
 <meta http-equiv="Cache-Control" content="no-cache">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="家庭小遊戲">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="favicon.png">
 <title>家庭小遊戲</title>
 <style>
 :root{--bg:#FFF6E9;--ink:#3B2A1A;--muted:#8A7258;--line:#F0DCC0;--accent:#FF7A45;
@@ -41,13 +44,14 @@ a.game:active{transform:translateY(5px);box-shadow:0 3px 0 var(--line)}
   <a class="game" href="span/"><div class="ico">🔦</div><div class="nm">記憶燈燈</div><div class="ds">記住格子亮起來的順序，再照順序點回去</div></a>
   <a class="game" href="shop/"><div class="ico">🛒</div><div class="nm">去買菜</div><div class="ds">記住購物清單，從輸送帶上挑對的東西</div></a>
   <a class="game" href="wire/"><div class="ico">💡</div><div class="nm">接電線</div><div class="ds">推動整排整列，把電池接到燈泡</div></a>
+  <a class="game" href="slide/"><div class="ico">🧊</div><div class="nm">照片滑塊</div><div class="ds">推動方塊，把照片排回原樣</div></a>
 </div>
 <button class="reload" id="reloadBtn">🔄 重新載入（有新遊戲時按這裡）</button>
 <div class="ver" id="ver"></div>
 <div class="updating" id="updating">✨ 有新版本，更新中…</div>
 <script>
 // 網站版本：每次打包自動更新（加到主畫面的 App 會用這個判斷要不要重新載入）
-const SITE_VERSION = '3ac82f64';
+const SITE_VERSION = '4c5bd27c';
 const reloadFresh = v => location.replace(location.pathname + '?v=' + (v || Date.now()));
 document.getElementById('reloadBtn').onclick = () => reloadFresh();
 document.getElementById('ver').textContent = '版本 ' + SITE_VERSION;
