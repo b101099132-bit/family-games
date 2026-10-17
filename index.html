@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
+<meta http-equiv="Cache-Control" content="no-cache">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>家庭小遊戲</title>
 <style>
@@ -20,6 +21,10 @@ a.game:active{transform:translateY(5px);box-shadow:0 3px 0 var(--line)}
 .ico{font-size:72px}
 .nm{font-size:28px;font-weight:900}
 .ds{font-size:16px;color:var(--muted);text-align:center}
+.reload{margin-top:34px;height:64px;padding:0 30px;border:0;border-radius:32px;background:#fff;color:var(--ink);font:inherit;font-size:22px;font-weight:800;box-shadow:0 6px 0 var(--line);cursor:pointer}
+.reload:active{transform:translateY(4px);box-shadow:0 2px 0 var(--line)}
+.ver{margin-top:10px;font-size:13px;color:#BBA78A}
+.updating{position:fixed;inset:0;background:rgba(255,246,233,.92);display:none;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:var(--accent);z-index:9}
 </style>
 </head>
 <body>
@@ -37,5 +42,25 @@ a.game:active{transform:translateY(5px);box-shadow:0 3px 0 var(--line)}
   <a class="game" href="shop/"><div class="ico">🛒</div><div class="nm">去買菜</div><div class="ds">記住購物清單，從輸送帶上挑對的東西</div></a>
   <a class="game" href="wire/"><div class="ico">💡</div><div class="nm">接電線</div><div class="ds">推動整排整列，把電池接到燈泡</div></a>
 </div>
+<button class="reload" id="reloadBtn">🔄 重新載入（有新遊戲時按這裡）</button>
+<div class="ver" id="ver"></div>
+<div class="updating" id="updating">✨ 有新版本，更新中…</div>
+<script>
+// 網站版本：每次打包自動更新（加到主畫面的 App 會用這個判斷要不要重新載入）
+const SITE_VERSION = '3ac82f64';
+const reloadFresh = v => location.replace(location.pathname + '?v=' + (v || Date.now()));
+document.getElementById('reloadBtn').onclick = () => reloadFresh();
+document.getElementById('ver').textContent = '版本 ' + SITE_VERSION;
+// 遊戲連結加上版本號，避免打開舊版
+document.querySelectorAll('a.game').forEach(a => a.href = a.getAttribute('href') + '?v=' + SITE_VERSION);
+// 自動檢查有沒有新版本
+fetch('version.json?t=' + Date.now(), {cache: 'no-store'}).then(r => r.json()).then(d => {
+  let tried = null; try { tried = sessionStorage.getItem('tried-version'); } catch(e) {}
+  if (d.v && d.v !== SITE_VERSION && tried !== d.v) {   // 每個新版本只自動重試一次，避免伺服器還沒更新時一直重整
+    try { sessionStorage.setItem('tried-version', d.v); } catch(e) {}
+    document.getElementById('updating').style.display = 'flex'; setTimeout(() => reloadFresh(d.v), 600);
+  }
+}).catch(() => {});
+</script>
 </body>
 </html>
