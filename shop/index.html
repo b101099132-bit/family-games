@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="robots" content="noindex,nofollow">
+<title>去買菜</title>
+<style>
+:root{
+  --bg:#F2FAEA; --ink:#25381A; --muted:#6E8A5C; --line:#D6EBC4; --panel:#fff;
+  --accent:#4CAF50; --accent-d:#378A3B; --ok:#21B573; --bad:#FF5E6C; --belt:#5E6B73;
+  font-family:"PingFang TC","Noto Sans TC","Microsoft JhengHei","Heiti TC",system-ui,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;height:100%;color:var(--ink);overflow:hidden;-webkit-user-select:none;user-select:none;touch-action:manipulation;}
+body{background:radial-gradient(circle at 10% 14%, #E1F3D2 0 130px, transparent 131px),radial-gradient(circle at 90% 88%, #FFF0C9 0 170px, transparent 171px),var(--bg);}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;}
+.screen{position:fixed;inset:0;display:none;}
+.screen.on{display:flex;}
+.title{font-size:clamp(34px,6vh,64px);font-weight:900;letter-spacing:.06em;margin:.2em 0 .1em;color:var(--accent);text-shadow:0 4px 0 #CDE8B8;}
+.title span{display:inline-block;animation:bob 2.4s ease-in-out infinite;}
+.title span:nth-child(2n){animation-delay:.3s}
+@keyframes bob{50%{transform:translateY(-6px) rotate(3deg)}}
+.panel{background:var(--panel);border-radius:24px;padding:20px 22px;box-shadow:0 6px 0 var(--line);}
+.seg{display:flex;gap:10px;flex-wrap:wrap;}
+.seg button{min-width:64px;height:56px;padding:0 18px;border-radius:16px;background:#F1F8EA;font-size:22px;font-weight:800;box-shadow:0 4px 0 var(--line);}
+.seg button.sel{background:var(--accent);color:#fff;box-shadow:0 4px 0 var(--accent-d);}
+.bigbtn{height:78px;padding:0 54px;border-radius:40px;background:var(--accent);color:#fff;font-size:34px;font-weight:900;letter-spacing:.1em;box-shadow:0 7px 0 var(--accent-d);}
+.bigbtn:active{transform:translateY(5px);box-shadow:0 2px 0 var(--accent-d);}
+.btn2{height:78px;padding:0 26px;border-radius:40px;background:#fff;font-size:22px;font-weight:800;box-shadow:0 7px 0 var(--line);}
+
+#home{flex-direction:column;align-items:center;overflow:auto;padding:max(16px,2.5vh) 16px 24px;}
+.subtitle{color:var(--muted);font-size:clamp(15px,2.2vh,20px);margin-bottom:max(12px,2vh);text-align:center;line-height:1.6;}
+.setting{display:flex;flex-direction:column;gap:10px;margin-bottom:20px;}
+.setting label{font-size:20px;font-weight:800;}
+.setting small{color:var(--muted);font-weight:500;font-size:14px;}
+.note{padding:12px 14px;border-radius:14px;background:#FFF7DE;color:#7A5A00;font-size:17px;font-weight:700;line-height:1.6;margin-bottom:18px;}
+.startbar{display:flex;gap:14px;justify-content:center;margin-top:22px;flex-wrap:wrap;}
+
+#game{flex-direction:column;}
+.topbar{display:flex;align-items:center;gap:10px;padding:10px 14px 4px;flex:none;}
+.topbar .grow{flex:1;font-size:clamp(20px,3vh,30px);font-weight:900;}
+.badge{font-size:clamp(18px,2.8vh,28px);font-weight:900;background:#fff;padding:6px 16px;border-radius:14px;box-shadow:0 4px 0 var(--line);}
+.icon{width:clamp(44px,6vh,60px);height:clamp(44px,6vh,60px);border-radius:16px;background:#fff;font-size:clamp(22px,3.2vh,30px);box-shadow:0 4px 0 var(--line);}
+.msg{text-align:center;font-size:clamp(26px,4.4vh,44px);font-weight:900;min-height:1.4em;margin:6px 0;flex:none;}
+#area{flex:1;min-height:0;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2vh;padding:0 16px 16px;}
+
+/* 購物清單 */
+.listcard{background:#FFFDF2;border-radius:28px;padding:22px 30px 26px;box-shadow:0 8px 0 #EADFB8,0 0 0 4px #F3E6B5 inset;max-width:94vw;
+  background-image:repeating-linear-gradient(#FFFDF2 0 46px,#E9E2C8 46px 48px);}
+.listcard h3{margin:0 0 14px;font-size:clamp(26px,4vh,40px);text-align:center;}
+.items{display:flex;flex-wrap:wrap;gap:clamp(12px,2vw,24px);justify-content:center;}
+.it{display:flex;flex-direction:column;align-items:center;gap:4px;background:#fff;border-radius:22px;padding:10px 14px;box-shadow:0 5px 0 var(--line);min-width:clamp(110px,14vh,160px);animation:popIn .4s cubic-bezier(.3,1.5,.5,1) backwards;}
+.it .e{font-size:clamp(60px,11vh,110px);line-height:1.1;}
+.it .t{font-size:clamp(18px,2.6vh,26px);font-weight:800;}
+@keyframes popIn{from{transform:scale(.3);opacity:0}}
+.timebar{width:min(600px,80vw);height:14px;border-radius:999px;background:#E3F0D6;overflow:hidden;}
+.timebar i{display:block;height:100%;background:var(--accent);transform-origin:left;}
+
+/* 輸送帶 */
+#belt{position:relative;width:100%;height:min(34vh,300px);background:var(--belt);border-radius:24px;overflow:hidden;
+  box-shadow:inset 0 10px 0 rgba(255,255,255,.12),inset 0 -10px 0 rgba(0,0,0,.18),0 8px 0 #3C454B;}
+#belt::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 56px,rgba(255,255,255,.12) 56px 60px);animation:roll 1.2s linear infinite;}
+#belt.paused::before{animation-play-state:paused;}
+@keyframes roll{to{transform:translateX(-60px)}}
+.goods{position:absolute;top:50%;width:var(--gs);height:var(--gs);margin-top:calc(var(--gs) / -2);border-radius:26px;background:#fff;display:grid;place-items:center;
+  font-size:calc(var(--gs) * .62);box-shadow:0 6px 0 rgba(0,0,0,.2);cursor:pointer;touch-action:manipulation;}
+.goods.no{animation:no .45s;background:#FFE1E4;}
+@keyframes no{25%{transform:translateX(-10px) rotate(-6deg)}75%{transform:translateX(10px) rotate(6deg)}}
+.fly{position:fixed;z-index:40;pointer-events:none;font-size:80px;transition:left .55s cubic-bezier(.5,0,.6,1),top .55s cubic-bezier(.3,-.4,.6,1),transform .55s;}
+.basket{display:flex;align-items:center;gap:10px;background:#fff;border-radius:999px;padding:8px 24px 8px 14px;box-shadow:0 6px 0 var(--line);min-height:80px;}
+.basket .b{font-size:60px;}
+.basket .got{display:flex;gap:6px;font-size:44px;min-width:60px;}
+.basket .got span{animation:popIn .35s cubic-bezier(.3,1.5,.5,1);}
+.tip{position:absolute;left:50%;top:18%;transform:translateX(-50%);background:var(--bad);color:#fff;font-size:28px;font-weight:900;padding:8px 26px;border-radius:999px;animation:popIn .3s;pointer-events:none;z-index:30;white-space:nowrap;}
+
+/* 結果 */
+.result{display:flex;flex-direction:column;align-items:center;gap:14px;}
+.stars{font-size:clamp(60px,10vh,96px);letter-spacing:8px;}
+.check{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;}
+.ck{position:relative;font-size:clamp(50px,8vh,80px);background:#fff;border-radius:20px;padding:6px 12px;box-shadow:0 5px 0 var(--line);}
+.ck b{position:absolute;right:-8px;top:-10px;font-size:30px;}
+.ck.miss{opacity:.45;}
+.ck.extra{background:#FFE1E4;}
+.legend{font-size:18px;color:var(--muted);font-weight:700;}
+
+.overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:50;}
+.overlay.on{display:flex;}
+.modal{background:rgba(30,50,20,.5);}
+.box{background:#fff;border-radius:30px;padding:30px 36px;min-width:min(520px,90vw);max-width:92vw;text-align:center;box-shadow:0 10px 0 var(--line);}
+.box h2{font-size:clamp(30px,5vh,46px);margin:0 0 14px;}
+.col{display:flex;flex-direction:column;gap:14px;align-items:center;}
+.col .bigbtn,.col .btn2{width:min(380px,80vw);}
+.meta{font-size:22px;color:var(--muted);font-weight:700;margin-bottom:18px;line-height:1.5}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:60;}
+</style>
+</head>
+<body>
+
+<section id="home" class="screen on">
+  <div class="title"><span>去</span><span>買</span><span>菜</span><span>🛒</span></div>
+  <div class="subtitle">先記住購物清單，商品會在輸送帶上經過，<br>看到清單上的就點它放進籃子；不在清單上的不要點喔！</div>
+  <div class="panel" style="width:min(820px,100%)">
+    <div class="note" id="note"></div>
+    <div class="setting"><label>📝 從幾樣開始</label><div class="seg" id="segStart"></div></div>
+    <div class="setting"><label>🐢 輸送帶速度</label><div class="seg" id="segSpeed"></div></div>
+    <div class="setting" style="margin-bottom:0"><label>🔊 音效</label><div class="seg" id="segSound"></div></div>
+  </div>
+  <div class="startbar">
+    <button class="btn2" onclick="location.href='../'">🏠 遊戲選單</button>
+    <button class="btn2" id="fsBtn">⛶ 全螢幕</button>
+    <button class="bigbtn" id="startBtn">出發！</button>
+  </div>
+</section>
+
+<section id="game" class="screen">
+  <div class="topbar">
+    <div class="grow" id="lvl"></div>
+    <div class="badge" id="starsTotal">⭐ 0</div>
+    <button class="icon" id="muteBtn">🔊</button>
+    <button class="icon" id="pauseBtn">⏸️</button>
+  </div>
+  <div class="msg" id="msg"></div>
+  <div id="area"></div>
+</section>
+
+<div class="overlay modal" id="pauseModal"><div class="box">
+  <h2>暫停一下</h2>
+  <div class="col">
+    <button class="bigbtn" id="resumeBtn">繼續玩</button>
+    <button class="btn2" id="endBtn">🏁 不玩了，看成績</button>
+  </div>
+</div></div>
+<div class="overlay modal" id="endModal"><div class="box">
+  <h2 id="endTitle">🛒 今天買菜辛苦了！</h2>
+  <div class="meta" id="endMeta"></div>
+  <div class="col">
+    <button class="bigbtn" id="againBtn">再去買一次</button>
+    <button class="btn2" id="endHomeBtn">🏠 回首頁</button>
+  </div>
+</div></div>
+<canvas id="confetti"></canvas>
+
+<script>
+const $ = id => document.getElementById(id);
+const POOL = [['🍎','蘋果'],['🍌','香蕉'],['🍇','葡萄'],['🍉','西瓜'],['🍓','草莓'],['🍊','橘子'],['🥕','紅蘿蔔'],['🌽','玉米'],['🥦','花椰菜'],['🍅','番茄'],
+  ['🥚','雞蛋'],['🥛','牛奶'],['🍞','麵包'],['🧀','起司'],['🐟','魚'],['🍗','雞腿'],['🍚','白飯'],['🧅','洋蔥'],['🥔','馬鈴薯'],['🍄','香菇'],['🍍','鳳梨'],['🥝','奇異果'],['🍑','桃子'],['🍪','餅乾']];
+const SPEED = { slow: 7000, normal: 5200, fast: 3800 };   // 商品從右邊走到左邊要幾毫秒
+const MAX_N = 7;
+
+let settings = { start: 1, speed: 'slow', sound: true };
+try { Object.assign(settings, JSON.parse(localStorage.getItem('shopgame-settings') || '{}')); } catch(e) {}
+function save(){ try { localStorage.setItem('shopgame-settings', JSON.stringify(settings)); } catch(e) {} }
+const getBest = () => { try { return +localStorage.getItem('shopgame-best') || 0; } catch(e) { return 0; } };
+const setBest = v => { try { localStorage.setItem('shopgame-best', v); } catch(e) {} };
+
+/* 音效 */
+let actx = null;
+function audio(){ if (!actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {} } if (actx && actx.state === 'suspended') actx.resume(); return actx; }
+function tone(f, d, {type='sine', vol=.18, at=0, slide=0} = {}){
+  if (!settings.sound) return; const a = audio(); if (!a) return;
+  const t = a.currentTime + at, o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(slide, t + d);
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + .015); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t + d + .05);
+}
+const SFX = {
+  pick(){ tone(700, .07, {type:'triangle', vol:.13}); },
+  got(){ tone(880, .1, {type:'triangle'}); tone(1320, .16, {type:'triangle', at:.08}); },
+  no(){ tone(280, .18, {vol:.13, slide:200}); },
+  tick(){ tone(1000, .05, {type:'square', vol:.05}); },
+  star(i){ tone([784, 988, 1319][i], .25, {type:'triangle', vol:.18}); },
+  win(){ [523,659,784,1047,784,1047,1319].forEach((f,i) => tone(f, .24, {type:'triangle', at:i*.12, vol:.2})); }
+};
+
+function seg(el, opts, cur, pick){ el.innerHTML = '';
+  opts.forEach(([v, l]) => { const b = document.createElement('button'); b.textContent = l; if (v === cur) b.classList.add('sel'); b.onclick = () => { audio(); SFX.pick(); pick(v); }; el.appendChild(b); }); }
+function renderHome(){
+  const best = getBest();
+  $('note').innerHTML = '全部買對就升級，清單會多一樣東西。' + (best ? `<br>目前最高紀錄：一次記住 <b>${best} 樣</b>` : '');
+  seg($('segStart'), [[1,'1 樣'],[2,'2 樣'],[3,'3 樣']], settings.start, v => { settings.start = v; save(); renderHome(); });
+  seg($('segSpeed'), [['slow','慢'],['normal','普通'],['fast','快']], settings.speed, v => { settings.speed = v; save(); renderHome(); });
+  seg($('segSound'), [[true,'開'],[false,'關']], settings.sound, v => { settings.sound = v; save(); renderHome(); });
+}
+const fsEl = document.documentElement;
+if (!(fsEl.requestFullscreen || fsEl.webkitRequestFullscreen)) $('fsBtn').hidden = true;
+$('fsBtn').onclick = () => { try { if (document.fullscreenElement || document.webkitFullscreenElement) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+  else (fsEl.requestFullscreen || fsEl.webkitRequestFullscreen).call(fsEl); } catch(e) {} };
+function show(id){ document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === id)); }
+function shuffle(a){ for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+async function wait(ms, token){ let left = ms; while (left > 0) { await sleep(50); if (token !== S.token) throw 'stop'; if (!S.paused) left -= 50; } }
+
+let S = null;
+function startGame(){
+  audio();
+  S = { n: settings.start, level: 1, stars: 0, best: 0, fails: 0, token: {}, paused: false, perfect: 0 };
+  $('muteBtn').textContent = settings.sound ? '🔊' : '🔇';
+  show('game'); runLevel().catch(() => {});
+}
+function setMsg(t){ $('msg').textContent = t; }
+function renderTop(){ $('lvl').textContent = `第 ${S.level} 關・清單 ${S.n} 樣`; $('starsTotal').textContent = `⭐ ${S.stars}`; }
+
+async function runLevel(){
+  const token = S.token; renderTop();
+  const pick = shuffle(POOL.slice()), targets = pick.slice(0, S.n), distract = pick.slice(S.n, S.n + Math.min(8, S.n + 2));
+  // 1. 看清單
+  setMsg('📝 記住要買什麼');
+  const listMs = (2600 + S.n * 1300) * (settings.speed === 'slow' ? 1.25 : 1);
+  $('area').innerHTML = `<div class="listcard"><h3>購物清單</h3><div class="items">${targets.map(([e, t], i) => `<div class="it" style="animation-delay:${i * .12}s"><div class="e">${e}</div><div class="t">${t}</div></div>`).join('')}</div></div>
+    <div class="timebar"><i id="tb"></i></div><button class="bigbtn" id="okBtn">我記住了！</button>`;
+  let skip = false; $('okBtn').onclick = () => { SFX.pick(); skip = true; };
+  const t0 = performance.now(); let used = 0, last = t0;
+  while (used < listMs && !skip) { await sleep(50); if (token !== S.token) return; const now = performance.now(); if (!S.paused) used += now - last; last = now; $('tb').style.transform = `scaleX(${1 - used / listMs})`; }
+  // 2. 倒數
+  for (const c of ['3', '2', '1']) { $('area').innerHTML = `<div style="font-size:min(30vh,240px);font-weight:900;color:var(--accent)">${c}</div>`; SFX.tick(); await wait(650, token); }
+  // 3. 輸送帶
+  setMsg('👆 看到清單上的就點它！');
+  $('area').innerHTML = `<div id="belt"></div><div class="basket"><span class="b">🧺</span><span class="got" id="got"></span></div>`;
+  const belt = $('belt'), BW = belt.clientWidth, gs = Math.min(belt.clientHeight * .72, 170);
+  belt.style.setProperty('--gs', gs + 'px');
+  const travel = SPEED[settings.speed], gap = travel * .5;
+  const stream = shuffle(targets.map(x => ({x, t: true})).concat(distract.map(x => ({x, t: false}))));
+  const got = [], wrong = [], alive = [];
+  let spawned = 0, sinceSpawn = gap, lastT = performance.now();
+  await new Promise(resolve => {
+    const frame = now => {
+      if (token !== S.token) return resolve();
+      const dt = now - lastT; lastT = now;
+      belt.classList.toggle('paused', S.paused);
+      if (!S.paused) {
+        sinceSpawn += dt;
+        if (spawned < stream.length && sinceSpawn >= gap) {
+          sinceSpawn = 0; const it = stream[spawned++];
+          const el = document.createElement('div'); el.className = 'goods'; el.textContent = it.x[0];
+          const g = { it, el, x: BW, done: false }; el.style.left = BW + 'px';
+          el.addEventListener('pointerdown', () => tapGoods(g)); belt.appendChild(el); alive.push(g);
+        }
+        const v = (BW + gs) / travel;
+        alive.forEach(g => { if (g.done) return; g.x -= v * dt; g.el.style.left = g.x + 'px'; if (g.x < -gs) { g.done = true; g.el.remove(); } });
+      }
+      if (spawned === stream.length && alive.every(g => g.done)) return resolve();
+      requestAnimationFrame(frame);
+    };
+    requestAnimationFrame(frame);
+  });
+  if (token !== S.token) return;
+  function tapGoods(g){
+    if (g.done || S.paused) return;
+    if (g.it.t) {
+      g.done = true; got.push(g.it.x); SFX.got();
+      const r = g.el.getBoundingClientRect(), b = $('got').getBoundingClientRect();
+      const f = document.createElement('div'); f.className = 'fly'; f.textContent = g.it.x[0]; f.style.left = r.left + 'px'; f.style.top = r.top + 'px'; f.style.fontSize = r.height * .62 + 'px';
+      document.body.appendChild(f); g.el.remove();
+      requestAnimationFrame(() => { f.style.left = (b.right + 10) + 'px'; f.style.top = (b.top - 10) + 'px'; f.style.transform = 'scale(.5)'; });
+      setTimeout(() => { f.remove(); const s = document.createElement('span'); s.textContent = g.it.x[0]; $('got') && $('got').appendChild(s); }, 560);
+    } else if (!g.el.classList.contains('no')) {
+      wrong.push(g.it.x); SFX.no(); g.el.classList.add('no');
+      const tip = document.createElement('div'); tip.className = 'tip'; tip.textContent = `${g.it.x[1]}不用買喔！`; $('area').appendChild(tip); setTimeout(() => tip.remove(), 900);
+    }
+  }
+  await wait(700, token);
+  // 4. 結果
+  const hits = got.length, miss = S.n - hits, fa = wrong.length;
+  const stars = miss === 0 && fa === 0 ? 3 : (miss <= 1 && fa <= 1) ? 2 : 1;
+  S.stars += stars;
+  if (miss === 0 && fa === 0) { S.best = Math.max(S.best, S.n); S.perfect++; }
+  setMsg(stars === 3 ? '🎉 全部買對了！' : stars === 2 ? '👍 差一點點！' : '💪 再試試看！');
+  const ck = targets.map(x => `<div class="ck${got.includes(x) ? '' : ' miss'}">${x[0]}<b>${got.includes(x) ? '✅' : '❓'}</b></div>`).join('')
+    + wrong.map(x => `<div class="ck extra">${x[0]}<b>❌</b></div>`).join('');
+  $('area').innerHTML = `<div class="result"><div class="stars" id="stars"></div><div class="check">${ck}</div>
+    <div class="legend">✅ 買到了　❓ 忘記買　❌ 不用買的</div><button class="bigbtn" id="nextBtn">${stars === 3 && S.n < MAX_N ? '下一關，多一樣！' : '下一關'}</button></div>`;
+  for (let i = 0; i < 3; i++) { await wait(260, token); $('stars').textContent += i < stars ? '⭐' : '☆'; if (i < stars) SFX.star(i); }
+  if (stars === 3) confetti();
+  renderTop();
+  await new Promise(res => { $('nextBtn').onclick = () => { SFX.pick(); res(); }; });
+  if (token !== S.token) return;
+  stopConfetti();
+  if (stars === 3) { S.n = Math.min(MAX_N, S.n + 1); S.fails = 0; }
+  else if (stars === 1) { S.fails++; if (S.fails >= 2) { S.n = Math.max(1, S.n - 1); S.fails = 0; } }
+  S.level++;
+  return runLevel();
+}
+
+$('pauseBtn').onclick = () => { if (!S) return; S.paused = true; $('pauseModal').classList.add('on'); };
+$('resumeBtn').onclick = () => { S.paused = false; $('pauseModal').classList.remove('on'); };
+$('muteBtn').onclick = () => { settings.sound = !settings.sound; save(); $('muteBtn').textContent = settings.sound ? '🔊' : '🔇'; };
+$('endBtn').onclick = () => {
+  $('pauseModal').classList.remove('on'); S.token = {};
+  const best = getBest(), isNew = S.best > best; if (isNew) setBest(S.best);
+  $('endMeta').innerHTML = `玩了 ${S.level - (S.level > 1 ? 1 : 0)} 關，拿到 ⭐ ${S.stars} 顆` + (S.best ? `<br>一次記住最多 <b>${S.best} 樣</b>` : '') + (isNew ? '　🏆 新紀錄！' : '');
+  $('endModal').classList.add('on'); SFX.win(); confetti();
+};
+$('againBtn').onclick = () => { $('endModal').classList.remove('on'); stopConfetti(); startGame(); };
+$('endHomeBtn').onclick = () => { $('endModal').classList.remove('on'); stopConfetti(); S = null; renderHome(); show('home'); };
+$('startBtn').onclick = startGame;
+
+let confRAF = 0;
+function confetti(){
+  const cv = $('confetti'), g = cv.getContext('2d'); cv.width = innerWidth * devicePixelRatio; cv.height = innerHeight * devicePixelRatio; g.scale(devicePixelRatio, devicePixelRatio);
+  const cols = ['#FF5E6C','#3D8BFF','#4CAF50','#9B6BFF','#FFC93C','#FF8A5B'];
+  const ps = Array.from({length:150}, () => ({x:Math.random()*innerWidth, y:-20-Math.random()*innerHeight*.6, vx:(Math.random()-.5)*3, vy:2+Math.random()*3, r:Math.random()*6, w:8+Math.random()*8, h:5+Math.random()*6, c:cols[Math.floor(Math.random()*cols.length)], s:(Math.random()-.5)*.3}));
+  const t0 = performance.now();
+  const step = t => { g.clearRect(0,0,innerWidth,innerHeight); ps.forEach(p => { p.x+=p.vx; p.y+=p.vy; p.r+=p.s; g.save(); g.translate(p.x,p.y); g.rotate(p.r); g.fillStyle=p.c; g.fillRect(-p.w/2,-p.h/2,p.w,p.h); g.restore(); });
+    if (t - t0 < 4000) confRAF = requestAnimationFrame(step); else g.clearRect(0,0,innerWidth,innerHeight); };
+  confRAF = requestAnimationFrame(step);
+}
+function stopConfetti(){ cancelAnimationFrame(confRAF); const cv = $('confetti'); cv.getContext('2d').clearRect(0, 0, cv.width, cv.height); }
+renderHome();
+</script>
+</body>
+</html>

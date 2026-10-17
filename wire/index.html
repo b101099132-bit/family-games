@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="robots" content="noindex,nofollow">
+<title>接電線</title>
+<style>
+:root{
+  --bg:#FFF6E8; --ink:#3A2A14; --muted:#957A52; --line:#F1DEC0; --panel:#fff;
+  --accent:#FF8A1F; --accent-d:#D96C05; --wire:#7A8796; --lit:#FFC400;
+  font-family:"PingFang TC","Noto Sans TC","Microsoft JhengHei","Heiti TC",system-ui,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;height:100%;color:var(--ink);overflow:hidden;-webkit-user-select:none;user-select:none;touch-action:manipulation;}
+body{background:radial-gradient(circle at 10% 14%, #FFE7C4 0 130px, transparent 131px),radial-gradient(circle at 90% 88%, #E2F0FF 0 170px, transparent 171px),var(--bg);}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;}
+.screen{position:fixed;inset:0;display:none;}
+.screen.on{display:flex;}
+.title{font-size:clamp(34px,6vh,64px);font-weight:900;letter-spacing:.06em;margin:.2em 0 .1em;color:var(--accent);text-shadow:0 4px 0 #FFD9B0;}
+.title span{display:inline-block;animation:bob 2.4s ease-in-out infinite;}
+.title span:nth-child(2n){animation-delay:.3s}
+@keyframes bob{50%{transform:translateY(-6px) rotate(-3deg)}}
+.panel{background:var(--panel);border-radius:24px;padding:20px 22px;box-shadow:0 6px 0 var(--line);}
+.seg{display:flex;gap:10px;flex-wrap:wrap;}
+.seg button{min-width:64px;height:56px;padding:0 18px;border-radius:16px;background:#FFF4E4;font-size:22px;font-weight:800;box-shadow:0 4px 0 var(--line);}
+.seg button.sel{background:var(--accent);color:#fff;box-shadow:0 4px 0 var(--accent-d);}
+.seg button small{display:block;font-size:13px;opacity:.85;}
+.bigbtn{height:78px;padding:0 54px;border-radius:40px;background:var(--accent);color:#fff;font-size:34px;font-weight:900;letter-spacing:.1em;box-shadow:0 7px 0 var(--accent-d);}
+.bigbtn:active{transform:translateY(5px);box-shadow:0 2px 0 var(--accent-d);}
+.btn2{height:78px;padding:0 26px;border-radius:40px;background:#fff;font-size:22px;font-weight:800;box-shadow:0 7px 0 var(--line);}
+
+#home{flex-direction:column;align-items:center;overflow:auto;padding:max(16px,2.5vh) 16px 24px;}
+.subtitle{color:var(--muted);font-size:clamp(15px,2.2vh,20px);margin-bottom:max(12px,2vh);text-align:center;line-height:1.6;}
+.setting{display:flex;flex-direction:column;gap:10px;margin-bottom:20px;}
+.setting label{font-size:20px;font-weight:800;}
+.note{padding:12px 14px;border-radius:14px;background:#FFF7DE;color:#7A5A00;font-size:17px;font-weight:700;line-height:1.6;margin-bottom:18px;}
+.demo{display:flex;align-items:center;justify-content:center;gap:10px;font-size:40px;margin-bottom:14px;}
+.startbar{display:flex;gap:14px;justify-content:center;margin-top:22px;flex-wrap:wrap;}
+
+#game{flex-direction:column;}
+.topbar{display:flex;align-items:center;gap:10px;padding:10px 14px 4px;flex:none;}
+.topbar .grow{flex:1;font-size:clamp(20px,3vh,30px);font-weight:900;}
+.badge{font-size:clamp(18px,2.8vh,28px);font-weight:900;background:#fff;padding:6px 16px;border-radius:14px;box-shadow:0 4px 0 var(--line);}
+.icon{height:clamp(44px,6vh,60px);min-width:clamp(44px,6vh,60px);padding:0 12px;border-radius:16px;background:#fff;font-size:clamp(18px,2.8vh,26px);font-weight:800;box-shadow:0 4px 0 var(--line);}
+.icon:active{transform:translateY(3px);box-shadow:0 1px 0 var(--line);}
+.msg{text-align:center;font-size:clamp(24px,4vh,40px);font-weight:900;min-height:1.4em;margin:2px 0 4px;flex:none;}
+#stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:4px 10px 14px;}
+.wrap{display:grid;grid-template-columns:var(--ab) var(--side) auto var(--side) var(--ab);grid-template-rows:var(--ab) auto var(--ab);gap:var(--g);align-items:center;justify-items:center;}
+.colbtns{display:grid;grid-template-columns:repeat(var(--n),var(--cs));gap:var(--g);}
+.rowbtns{display:grid;grid-template-rows:repeat(var(--n),var(--cs));gap:var(--g);}
+.ab{width:var(--ab);height:var(--ab);border-radius:30%;background:#fff;box-shadow:0 5px 0 var(--line);font-size:calc(var(--ab) * .5);color:var(--accent);font-weight:900;}
+.colbtns .ab{width:var(--cs);}
+.rowbtns .ab{height:var(--cs);}
+.ab:active{transform:translateY(3px);box-shadow:0 2px 0 var(--line);background:#FFF0DA;}
+#board{display:grid;grid-template-columns:repeat(var(--n),var(--cs));grid-auto-rows:var(--cs);gap:var(--g);background:#E9DCC8;padding:var(--g);border-radius:20px;box-shadow:inset 0 4px 0 rgba(0,0,0,.08);}
+.tile{background:#FFFDF8;border-radius:16%;box-shadow:0 3px 0 #DCCBB0;transition:transform .18s;}
+.tile svg{width:100%;height:100%;display:block;}
+.tile.lit{background:#FFF6CC;}
+.tile.bump{animation:bump .2s;}
+@keyframes bump{50%{transform:scale(.92)}}
+.side{font-size:calc(var(--cs) * .75);text-align:center;line-height:1;filter:grayscale(.2);}
+.side.bulb{filter:grayscale(1) brightness(.9);transition:filter .4s;}
+.side.bulb.on{filter:drop-shadow(0 0 22px #FFD400) drop-shadow(0 0 8px #FFD400);animation:glow 1s ease-in-out infinite;}
+@keyframes glow{50%{transform:scale(1.12)}}
+.wire{stroke:var(--wire);transition:stroke .3s;}
+.lit .wire{stroke:var(--lit);}
+.knot{fill:var(--wire);}
+.lit .knot{fill:var(--lit);}
+
+.overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:50;}
+.overlay.on{display:flex;}
+.modal{background:rgba(60,40,10,.45);}
+.box{background:#fff;border-radius:30px;padding:30px 36px;min-width:min(520px,90vw);max-width:92vw;text-align:center;box-shadow:0 10px 0 var(--line);animation:zoomIn .3s cubic-bezier(.3,1.5,.5,1);}
+@keyframes zoomIn{from{transform:scale(.3);opacity:0}}
+.box h2{font-size:clamp(30px,5vh,46px);margin:0 0 10px;}
+.stars{font-size:clamp(56px,9vh,86px);letter-spacing:8px;}
+.col{display:flex;flex-direction:column;gap:14px;align-items:center;}
+.col .bigbtn,.col .btn2{width:min(380px,80vw);}
+.meta{font-size:22px;color:var(--muted);font-weight:700;margin-bottom:18px;line-height:1.5}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:60;}
+</style>
+</head>
+<body>
+
+<section id="home" class="screen on">
+  <div class="title"><span>接</span><span>電</span><span>線</span><span>💡</span></div>
+  <div class="subtitle">電線被打亂了！按格子外面的箭頭，把<b>整排</b>或<b>整列</b>推一格<br>（推出去的會從另一邊回來），把電池 🔋 接到燈泡 💡，燈就會亮！</div>
+  <div class="panel" style="width:min(820px,100%)">
+    <div class="note" id="note"></div>
+    <div class="setting"><label>🔲 格子大小</label><div class="seg" id="segSize"></div></div>
+    <div class="setting" style="margin-bottom:0"><label>🔊 音效</label><div class="seg" id="segSound"></div></div>
+  </div>
+  <div class="startbar">
+    <button class="btn2" onclick="location.href='../'">🏠 遊戲選單</button>
+    <button class="btn2" id="fsBtn">⛶ 全螢幕</button>
+    <button class="bigbtn" id="startBtn">開始接線！</button>
+  </div>
+</section>
+
+<section id="game" class="screen">
+  <div class="topbar">
+    <div class="grow" id="info"></div>
+    <div class="badge" id="moves">推了 0 次</div>
+    <button class="icon" id="undoBtn">↩️ 復原</button>
+    <button class="icon" id="resetBtn">🔄 重來</button>
+    <button class="icon" id="muteBtn">🔊</button>
+    <button class="icon" id="homeBtn">🏠</button>
+  </div>
+  <div class="msg" id="msg">把電池接到燈泡！</div>
+  <div id="stage">
+    <div class="wrap" id="wrap">
+      <div></div><div></div><div class="colbtns" id="top"></div><div></div><div></div>
+      <div class="rowbtns" id="left"></div><div class="side">🔋</div><div id="board"></div><div class="side bulb" id="bulb">💡</div><div class="rowbtns" id="right"></div>
+      <div></div><div></div><div class="colbtns" id="bottom"></div><div></div><div></div>
+    </div>
+  </div>
+</section>
+
+<div class="overlay modal" id="doneModal"><div class="box">
+  <h2>💡 燈亮了！</h2>
+  <div class="stars" id="stars"></div>
+  <div class="meta" id="doneMeta"></div>
+  <div class="col">
+    <button class="bigbtn" id="nextBtn">下一題</button>
+    <button class="btn2" id="harderBtn">💪 換大一點的格子</button>
+  </div>
+</div></div>
+<canvas id="confetti"></canvas>
+
+<script>
+const $ = id => document.getElementById(id);
+let settings = { size: 3, sound: true };
+try { Object.assign(settings, JSON.parse(localStorage.getItem('wiregame-settings') || '{}')); } catch(e) {}
+function save(){ try { localStorage.setItem('wiregame-settings', JSON.stringify(settings)); } catch(e) {} }
+function getStats(){ try { return JSON.parse(localStorage.getItem('wiregame-stats') || '{}'); } catch(e) { return {}; } }
+function addSolved(n, stars){ const s = getStats(); s[n] = s[n] || {solved: 0, stars: 0}; s[n].solved++; s[n].stars += stars; try { localStorage.setItem('wiregame-stats', JSON.stringify(s)); } catch(e) {} }
+
+/* 音效 */
+let actx = null;
+function audio(){ if (!actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {} } if (actx && actx.state === 'suspended') actx.resume(); return actx; }
+function tone(f, d, {type='sine', vol=.18, at=0, slide=0} = {}){
+  if (!settings.sound) return; const a = audio(); if (!a) return;
+  const t = a.currentTime + at, o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(slide, t + d);
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + .015); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t + d + .05);
+}
+const SFX = {
+  pick(){ tone(700, .07, {type:'triangle', vol:.13}); },
+  slide(){ tone(420, .09, {type:'triangle', vol:.12, slide:620}); },
+  undo(){ tone(620, .09, {type:'triangle', vol:.1, slide:420}); },
+  zap(){ tone(200, .5, {type:'sawtooth', vol:.06, slide:1600}); [784,988,1175,1568].forEach((f,i) => tone(f, .2, {type:'triangle', at:.3 + i*.08})); },
+  star(i){ tone([784, 988, 1319][i], .25, {type:'triangle', vol:.18}); }
+};
+
+function seg(el, opts, cur, pick){ el.innerHTML = '';
+  opts.forEach(([v, l, sub]) => { const b = document.createElement('button'); b.innerHTML = '<span></span>' + (sub ? `<small>${sub}</small>` : ''); b.querySelector('span').textContent = l;
+    if (v === cur) b.classList.add('sel'); b.onclick = () => { audio(); SFX.pick(); pick(v); }; el.appendChild(b); }); }
+function renderHome(){
+  const s = getStats(), total = Object.values(s).reduce((a, x) => a + x.solved, 0), stars = Object.values(s).reduce((a, x) => a + x.stars, 0);
+  $('note').innerHTML = '不限時間，推的次數越少，星星越多。可以「復原」上一步，或「重來」這一題。' + (total ? `<br>目前一共接好 <b>${total}</b> 題，拿到 ⭐ <b>${stars}</b> 顆` : '');
+  seg($('segSize'), [[3,'3×3','簡單'],[4,'4×4','普通'],[5,'5×5','挑戰']], settings.size, v => { settings.size = v; save(); renderHome(); });
+  seg($('segSound'), [[true,'開'],[false,'關']], settings.sound, v => { settings.sound = v; save(); renderHome(); });
+}
+const fsEl = document.documentElement;
+if (!(fsEl.requestFullscreen || fsEl.webkitRequestFullscreen)) $('fsBtn').hidden = true;
+$('fsBtn').onclick = () => { try { if (document.fullscreenElement || document.webkitFullscreenElement) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+  else (fsEl.requestFullscreen || fsEl.webkitRequestFullscreen).call(fsEl); } catch(e) {} };
+function show(id){ document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === id)); }
+
+/* 題目：一條從左邊通到右邊的電線，每格記錄有哪幾個方向的線頭（N S E W） */
+let N = 3, grid = [], start = [], hist = [], moves = 0, scrambleMoves = 0, solved = false, count = 0;
+const rnd = n => Math.floor(Math.random() * n);
+function genPath(n){
+  const g = Array.from({length: n}, () => Array(n).fill(''));
+  let r = rnd(n), c = 0, prev = 'W'; const cells = [[r, c]];
+  while (c < n - 1) {
+    const opts = ['E'];
+    if (r > 0 && !cells.some(([a, b]) => a === r - 1 && b === c)) opts.push('N');
+    if (r < n - 1 && !cells.some(([a, b]) => a === r + 1 && b === c)) opts.push('S');
+    const d = Math.random() < .55 ? 'E' : opts[rnd(opts.length)];
+    g[r][c] = prev + d;
+    if (d === 'E') { c++; prev = 'W'; } else if (d === 'N') { r--; prev = 'S'; } else { r++; prev = 'N'; }
+    cells.push([r, c]);
+  }
+  g[r][c] = prev + 'E';
+  // 空格放一些不相連的小電線，增加一點難度
+  const extra = n >= 5 ? 3 : n === 4 ? 1 : 0;
+  for (let k = 0; k < extra; k++) { const rr = rnd(n), cc = rnd(n); if (!g[rr][cc]) g[rr][cc] = ['NS', 'WE', 'NE', 'SW'][rnd(4)]; }
+  return g;
+}
+function shiftRow(g, r, dir){ const row = g[r]; if (dir > 0) row.unshift(row.pop()); else row.push(row.shift()); }
+function shiftCol(g, c, dir){ const col = g.map(row => row[c]); if (dir > 0) col.unshift(col.pop()); else col.push(col.shift()); g.forEach((row, i) => row[c] = col[i]); }
+function litCells(){
+  const opp = {N: 'S', S: 'N', E: 'W', W: 'E'}, dv = {N: [-1, 0], S: [1, 0], E: [0, 1], W: [0, -1]};
+  for (let r0 = 0; r0 < N; r0++) {
+    if (!grid[r0][0].includes('W')) continue;
+    const seen = new Set(), stack = [[r0, 0]]; let reached = false;
+    while (stack.length) {
+      const [r, c] = stack.pop(), key = r + ',' + c; if (seen.has(key)) continue; seen.add(key);
+      const t = grid[r][c]; if (c === N - 1 && t.includes('E')) reached = true;
+      for (const d of t) { const [dr, dc] = dv[d], nr = r + dr, nc = c + dc; if (nr < 0 || nc < 0 || nr >= N || nc >= N) continue; if (grid[nr][nc].includes(opp[d])) stack.push([nr, nc]); }
+    }
+    if (reached) return seen;
+  }
+  return null;
+}
+function tileSvg(t){
+  const P = {N: [50, -6], S: [50, 106], E: [106, 50], W: [-6, 50]};
+  const segs = [...t].map(d => `<line class="wire" x1="50" y1="50" x2="${P[d][0]}" y2="${P[d][1]}" stroke-width="20" stroke-linecap="round"/>`).join('');
+  return `<svg viewBox="0 0 100 100">${segs}${t ? '<circle class="knot" cx="50" cy="50" r="13"/>' : ''}</svg>`;
+}
+
+function newPuzzle(){
+  N = settings.size; moves = 0; hist = []; solved = false; count++;
+  const steps = N === 3 ? 3 : N === 4 ? 5 : 7;
+  do {
+    grid = genPath(N); scrambleMoves = 0;
+    for (let i = 0; i < steps; i++) { if (Math.random() < .5) shiftRow(grid, rnd(N), Math.random() < .5 ? 1 : -1); else shiftCol(grid, rnd(N), Math.random() < .5 ? 1 : -1); scrambleMoves++; }
+  } while (litCells());
+  start = grid.map(r => r.slice());
+  $('info').textContent = `第 ${count} 題・${N}×${N}`;
+  $('msg').textContent = '把電池接到燈泡！';
+  layout(); render();
+}
+function layout(){
+  const st = $('stage'), W = st.clientWidth - 20, H = st.clientHeight - 18;
+  // 欄：箭頭 + 電池 + N 格 + 燈泡 + 箭頭；列：箭頭 + N 格 + 箭頭
+  const g = Math.max(6, Math.min(12, Math.min(W, H) * .012));
+  const cs = Math.floor(Math.min((W - 4 * g - (N - 1) * g - 2 * g) / (N + 2 * .8 + 2 * .75), (H - 2 * g - (N - 1) * g - 2 * g) / (N + 2 * .8)));
+  const w = $('wrap'); w.style.setProperty('--n', N); w.style.setProperty('--cs', cs + 'px'); w.style.setProperty('--g', g + 'px');
+  w.style.setProperty('--ab', Math.round(cs * .8) + 'px'); w.style.setProperty('--side', Math.round(cs * .75) + 'px');
+}
+addEventListener('resize', () => { if ($('game').classList.contains('on')) layout(); });
+function render(bump){
+  const lit = litCells();
+  $('board').innerHTML = grid.map((row, r) => row.map((t, c) => `<div class="tile${lit && lit.has(r + ',' + c) ? ' lit' : ''}${bump && bump(r, c) ? ' bump' : ''}">${tileSvg(t)}</div>`).join('')).join('');
+  const ab = (k, i, d, ch) => `<button class="ab" data-k="${k}" data-i="${i}" data-d="${d}">${ch}</button>`;
+  $('left').innerHTML = grid.map((_, r) => ab('r', r, -1, '◀')).join('');
+  $('right').innerHTML = grid.map((_, r) => ab('r', r, 1, '▶')).join('');
+  $('top').innerHTML = grid[0].map((_, c) => ab('c', c, -1, '▲')).join('');
+  $('bottom').innerHTML = grid[0].map((_, c) => ab('c', c, 1, '▼')).join('');
+  document.querySelectorAll('.ab').forEach(b => b.onclick = () => mv(b.dataset.k, +b.dataset.i, +b.dataset.d));
+  $('moves').textContent = `推了 ${moves} 次`;
+  $('bulb').classList.toggle('on', !!lit);
+  if (lit && !solved) onSolved();
+}
+function mv(k, i, d){
+  if (solved) return; audio(); SFX.slide();
+  hist.push(grid.map(r => r.slice()));
+  if (k === 'r') shiftRow(grid, i, d); else shiftCol(grid, i, d);
+  moves++; render((r, c) => k === 'r' ? r === i : c === i);
+}
+$('undoBtn').onclick = () => { if (solved || !hist.length) return; SFX.undo(); grid = hist.pop(); moves++; render(); };
+$('resetBtn').onclick = () => { if (solved) return; SFX.undo(); grid = start.map(r => r.slice()); hist = []; moves = 0; render(); };
+async function onSolved(){
+  solved = true; SFX.zap(); $('msg').textContent = '⚡ 通電了！燈亮了！';
+  const stars = moves <= scrambleMoves ? 3 : moves <= scrambleMoves * 2 + 2 ? 2 : 1;
+  addSolved(N, stars);
+  await new Promise(r => setTimeout(r, 1200));
+  $('stars').textContent = ''; $('doneMeta').innerHTML = `推了 ${moves} 次` + (stars === 3 ? '，好厲害！' : stars === 2 ? '，再少推幾次就三顆星！' : '');
+  $('harderBtn').style.display = N < 5 ? '' : 'none';
+  $('doneModal').classList.add('on'); confetti();
+  for (let i = 0; i < 3; i++) { await new Promise(r => setTimeout(r, 260)); $('stars').textContent += i < stars ? '⭐' : '☆'; if (i < stars) SFX.star(i); }
+}
+$('nextBtn').onclick = () => { $('doneModal').classList.remove('on'); stopConfetti(); newPuzzle(); };
+$('harderBtn').onclick = () => { $('doneModal').classList.remove('on'); stopConfetti(); settings.size = Math.min(5, N + 1); save(); newPuzzle(); };
+$('homeBtn').onclick = () => { renderHome(); show('home'); };
+$('muteBtn').onclick = () => { settings.sound = !settings.sound; save(); $('muteBtn').textContent = settings.sound ? '🔊' : '🔇'; };
+$('startBtn').onclick = () => { audio(); count = 0; $('muteBtn').textContent = settings.sound ? '🔊' : '🔇'; show('game'); newPuzzle(); };
+
+let confRAF = 0;
+function confetti(){
+  const cv = $('confetti'), g = cv.getContext('2d'); cv.width = innerWidth * devicePixelRatio; cv.height = innerHeight * devicePixelRatio; g.scale(devicePixelRatio, devicePixelRatio);
+  const cols = ['#FF5E6C','#3D8BFF','#FF8A1F','#21B573','#FFC93C','#9B6BFF'];
+  const ps = Array.from({length:150}, () => ({x:Math.random()*innerWidth, y:-20-Math.random()*innerHeight*.6, vx:(Math.random()-.5)*3, vy:2+Math.random()*3, r:Math.random()*6, w:8+Math.random()*8, h:5+Math.random()*6, c:cols[Math.floor(Math.random()*cols.length)], s:(Math.random()-.5)*.3}));
+  const t0 = performance.now();
+  const step = t => { g.clearRect(0,0,innerWidth,innerHeight); ps.forEach(p => { p.x+=p.vx; p.y+=p.vy; p.r+=p.s; g.save(); g.translate(p.x,p.y); g.rotate(p.r); g.fillStyle=p.c; g.fillRect(-p.w/2,-p.h/2,p.w,p.h); g.restore(); });
+    if (t - t0 < 3500) confRAF = requestAnimationFrame(step); else g.clearRect(0,0,innerWidth,innerHeight); };
+  confRAF = requestAnimationFrame(step);
+}
+function stopConfetti(){ cancelAnimationFrame(confRAF); const cv = $('confetti'); cv.getContext('2d').clearRect(0, 0, cv.width, cv.height); }
+renderHome();
+</script>
+</body>
+</html>
