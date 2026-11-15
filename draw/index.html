@@ -97,7 +97,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;}
 
 /* 猜猜看 */
 #guessWrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:4px 12px;}
-#guessImg{max-width:100%;max-height:100%;border-radius:22px;background:#fff;box-shadow:0 8px 0 var(--line),0 0 0 6px #fff;}
+#guessImg{display:block;flex:none;border-radius:22px;background:#fff;box-shadow:0 8px 0 var(--line),0 0 0 6px #fff;}
 .hintbar{flex:none;text-align:center;font-size:clamp(22px,3.6vh,36px);font-weight:900;min-height:1.3em;color:var(--accent-d);}
 .hintbar .hbox{display:inline-block;width:1.4em;height:1.4em;border:4px dashed var(--accent);border-radius:10px;margin:0 4px;vertical-align:middle;}
 .guessBtns{flex:none;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;padding:8px 12px max(14px,env(safe-area-inset-bottom));}
@@ -114,7 +114,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;}
 .pcard{display:flex;flex-direction:column;align-items:center;gap:8px;min-height:0;max-height:100%;}
 .pcard .lb{font-size:clamp(18px,2.8vh,28px);font-weight:900;color:var(--muted);}
 .pcard .orig{width:var(--ps);height:var(--ps);border-radius:30px;background:#fff;box-shadow:0 8px 0 var(--line);display:grid;place-items:center;font-size:calc(var(--ps)*.66);line-height:1;}
-.pcard img{height:var(--ps);border-radius:24px;background:#fff;box-shadow:0 8px 0 var(--line);}
+.pcard img{display:block;height:var(--ps);width:calc(var(--ps) * 4 / 3);border-radius:24px;background:#fff;box-shadow:0 8px 0 var(--line);}
 .vs{font-size:clamp(34px,6vh,64px);}
 .revBtns{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;flex:none;}
 
@@ -492,7 +492,7 @@ $('undoBtn').onclick = () => { SFX.pick(); strokes.pop(); redraw(); };
 $('clearBtn').onclick = () => { if (!visible().length) return; SFX.pick(); $('confirmClear').classList.add('on'); };
 $('clearYes').onclick = () => { strokes.push({clear: true}); redraw(); $('confirmClear').classList.remove('on'); };
 $('clearNo').onclick = () => $('confirmClear').classList.remove('on');
-addEventListener('resize', () => { if ($('draw').classList.contains('on')) fitPad(); fitReveal(); });
+addEventListener('resize', () => { if ($('draw').classList.contains('on')) fitPad(); fitGuess(); fitReveal(); });
 
 async function startDraw(){
   strokes = []; cur = null; pen.eraser = false; syncTools();
@@ -533,7 +533,15 @@ function startGuess(timeUp){
   $('guessImg').src = G.drawing; $('guessRound').textContent = `第 ${G.round + 1} / ${settings.rounds} 題`;
   $('guessMsg').textContent = timeUp ? '⏰ 時間到！猜猜看，畫的是什麼？' : '🤔 猜猜看，畫的是什麼？';
   $('hintbar').textContent = '';
-  renderScores(); renderGuessBtns(); show('guess');
+  renderScores(); renderGuessBtns(); show('guess'); fitGuess();
+}
+/* 猜題畫面的圖用固定像素大小（iPad Safari 用百分比會把圖縮成看不見） */
+function fitGuess(tries = 0){
+  if (!$('guess').classList.contains('on')) return;
+  const wrap = $('guessWrap'), aw = wrap.clientWidth - 24, ah = wrap.clientHeight - 8;
+  if ((aw < 50 || ah < 50) && tries < 20) return requestAnimationFrame(() => fitGuess(tries + 1));
+  const w = Math.max(160, Math.floor(Math.min(aw, ah * W / H))), h = Math.floor(w * H / W);
+  Object.assign($('guessImg').style, { width: w + 'px', height: h + 'px' });
 }
 function renderGuessBtns(){
   const box = $('guessBtns'); box.innerHTML = ''; const pts = G.hint ? 1 : 2;

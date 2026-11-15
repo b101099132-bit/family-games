@@ -52,7 +52,7 @@ a.game:active{transform:translateY(5px);box-shadow:0 3px 0 var(--line)}
 <div class="updating" id="updating">✨ 有新版本，更新中…</div>
 <script>
 // 網站版本：每次打包自動更新（加到主畫面的 App 會用這個判斷要不要重新載入）
-const SITE_VERSION = '2bd8aa8c';
+const SITE_VERSION = '4298a95a';
 const reloadFresh = v => location.replace(location.pathname + '?v=' + (v || Date.now()));
 document.getElementById('reloadBtn').onclick = () => reloadFresh();
 document.getElementById('ver').textContent = '版本 ' + SITE_VERSION;
