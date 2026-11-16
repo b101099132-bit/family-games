@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="robots" content="noindex,nofollow">
+<title>注音找找看</title>
+<style>
+:root{
+  --bg:#EEF6FF; --ink:#23324A; --muted:#6F80A0; --line:#D3E3F7; --panel:#fff;
+  --accent:#3D7BFF; --accent-d:#2257D6; --ok:#21B573; --bad:#FF5E6C; --hl:#FF3D6E;
+  --p0:#FF5E6C; --p1:#3D8BFF; --p2:#F2A100; --p3:#22A57E;
+  font-family:"PingFang TC","Noto Sans TC","Microsoft JhengHei","Heiti TC",system-ui,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;height:100%;color:var(--ink);overflow:hidden;-webkit-user-select:none;user-select:none;touch-action:manipulation;}
+body{background:radial-gradient(circle at 10% 14%, #DCEBFF 0 130px, transparent 131px),radial-gradient(circle at 90% 88%, #FFE6EC 0 170px, transparent 171px),var(--bg);}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;}
+.screen{position:fixed;inset:0;display:none;}
+.screen.on{display:flex;}
+.title{font-size:clamp(34px,6vh,64px);font-weight:900;letter-spacing:.06em;margin:.2em 0 .1em;color:var(--accent);text-shadow:0 4px 0 #C9DCFF;}
+.title span{display:inline-block;animation:bob 2.4s ease-in-out infinite;}
+.title span:nth-child(2n){animation-delay:.3s}
+@keyframes bob{50%{transform:translateY(-6px) rotate(-3deg)}}
+.panel{background:var(--panel);border-radius:24px;padding:20px 22px;box-shadow:0 6px 0 var(--line);}
+.panel h2{margin:0 0 14px;font-size:22px;}
+.panel h2 small{font-size:14px;color:var(--muted);font-weight:600;}
+.seg{display:flex;gap:10px;flex-wrap:wrap;}
+.seg button{min-width:64px;height:56px;padding:0 18px;border-radius:16px;background:#EEF4FF;font-size:21px;font-weight:800;box-shadow:0 4px 0 var(--line);}
+.seg button.sel{background:var(--accent);color:#fff;box-shadow:0 4px 0 var(--accent-d);}
+.seg button:disabled{opacity:.35;}
+.bigbtn{height:78px;padding:0 54px;border-radius:40px;background:var(--accent);color:#fff;font-size:34px;font-weight:900;letter-spacing:.1em;box-shadow:0 7px 0 var(--accent-d);}
+.bigbtn:active{transform:translateY(5px);box-shadow:0 2px 0 var(--accent-d);}
+.btn2{height:78px;padding:0 26px;border-radius:40px;background:#fff;font-size:22px;font-weight:800;box-shadow:0 7px 0 var(--line);}
+.btn2:active{transform:translateY(5px);box-shadow:0 2px 0 var(--line);}
+
+#home{flex-direction:column;align-items:center;overflow:auto;padding:max(16px,2.5vh) 16px 24px;}
+.subtitle{color:var(--muted);font-size:clamp(15px,2.2vh,20px);margin-bottom:max(12px,2vh);text-align:center;line-height:1.5;}
+.home-grid{display:grid;grid-template-columns:1fr 1.3fr;gap:20px;width:min(1200px,100%);align-items:start;}
+@media (orientation:portrait),(max-width:820px){.home-grid{grid-template-columns:1fr}}
+.players{display:flex;flex-direction:column;gap:12px;margin-top:16px;}
+.prow{display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:18px;background:#F6FAFF;border:3px solid var(--pc);}
+.avatar{width:62px;height:62px;border-radius:50%;background:var(--pc);font-size:38px;display:grid;place-items:center;flex:none;box-shadow:0 4px 0 rgba(0,0,0,.12);}
+.prow input{flex:1;min-width:0;height:52px;border-radius:14px;border:2px solid var(--line);font:inherit;font-size:24px;font-weight:700;padding:0 14px;color:var(--ink);background:#fff;}
+.setting{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;}
+.setting label{font-size:18px;font-weight:800;}
+.setting label small{color:var(--muted);font-weight:500;font-size:14px;}
+.note{padding:10px 14px;border-radius:14px;background:#FFF7DE;color:#7A5A00;font-size:16px;font-weight:700;line-height:1.5;}
+.pokeLock[hidden]{display:none;}
+.pokeLock{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;}
+.pokeLock input{height:48px;border-radius:12px;border:2px solid var(--line);font:inherit;font-size:20px;padding:0 12px;width:180px;}
+.pokeLock button{height:48px;padding:0 18px;border-radius:12px;background:var(--accent);color:#fff;font-weight:800;font-size:18px;}
+.startbar{display:flex;gap:14px;justify-content:center;margin-top:22px;flex-wrap:wrap;}
+
+/* 遊戲 */
+#game{flex-direction:column;}
+.topbar{display:flex;align-items:center;gap:12px;padding:10px 14px 4px;flex:none;}
+.scores{flex:1;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+.chip{display:flex;align-items:center;gap:8px;padding:5px 14px 5px 5px;border-radius:999px;background:#fff;border:4px solid transparent;box-shadow:0 4px 0 var(--line);opacity:.55;transition:.2s;}
+.chip.turn{border-color:var(--pc);opacity:1;transform:scale(1.06);}
+.chip .av{width:clamp(36px,5.4vh,54px);height:clamp(36px,5.4vh,54px);border-radius:50%;background:var(--pc);display:grid;place-items:center;font-size:clamp(22px,3.2vh,34px);}
+.chip .nm{font-size:clamp(15px,2.2vh,22px);font-weight:800;white-space:nowrap;max-width:14vw;overflow:hidden;text-overflow:ellipsis;}
+.chip .sc{font-size:clamp(20px,3.2vh,32px);font-weight:900;color:var(--pc);min-width:1.1em;text-align:center;}
+.chip.bump{animation:bump .6s;}
+@keyframes bump{40%{transform:scale(1.25)}}
+.status{display:flex;align-items:center;gap:10px;flex:none;}
+.badge{font-size:clamp(18px,2.8vh,28px);font-weight:900;background:#fff;padding:6px 16px;border-radius:14px;box-shadow:0 4px 0 var(--line);white-space:nowrap;}
+.icon{width:clamp(44px,6vh,60px);height:clamp(44px,6vh,60px);border-radius:16px;background:#fff;font-size:clamp(22px,3.2vh,30px);box-shadow:0 4px 0 var(--line);}
+.ask{flex:none;display:flex;align-items:center;justify-content:center;gap:clamp(14px,2.4vw,30px);padding:clamp(4px,1vh,14px) 14px;}
+.sym{width:var(--sz);height:var(--sz);--sz:clamp(110px,22vh,230px);border-radius:32px;background:#fff;box-shadow:0 8px 0 var(--line),0 0 0 6px var(--accent) inset;display:grid;place-items:center;font-size:calc(var(--sz)*.66);font-weight:900;color:var(--accent);line-height:1;position:relative;flex:none;}
+.sym small{position:absolute;right:8px;bottom:6px;font-size:22px;}
+.sym:active{transform:scale(.95);}
+.qtext{font-size:clamp(26px,4.6vh,50px);font-weight:900;line-height:1.35;}
+.qtext .s{color:var(--accent);font-size:1.25em;padding:0 .1em;}
+.qtext .sub{display:block;font-size:.55em;color:var(--muted);}
+.who{display:inline-flex;align-items:center;gap:6px;color:var(--pc);}
+.cards{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;gap:clamp(12px,2.4vw,36px);padding:4px 14px;}
+.card{width:var(--cw);border-radius:28px;background:#fff;box-shadow:0 8px 0 var(--line);display:flex;flex-direction:column;align-items:center;overflow:hidden;border:6px solid #fff;transition:transform .2s,opacity .3s;position:relative;}
+.card:active{transform:scale(.97);}
+.card .pic{width:100%;aspect-ratio:1;display:grid;place-items:center;font-size:calc(var(--cw)*.56);line-height:1;}
+.card .pic img{width:88%;height:88%;object-fit:contain;-webkit-user-drag:none;pointer-events:none;}
+.card .nm{min-height:calc(var(--cw)*.34);width:100%;display:flex;align-items:center;justify-content:center;padding:4px 6px 10px;background:#F6FAFF;}
+.card .nm .q{font-size:calc(var(--cw)*.2);font-weight:900;color:#C6D4EA;}
+.card.right{border-color:var(--ok);box-shadow:0 8px 0 #168A57;transform:scale(1.05);}
+.card.right .nm{background:#E4F8EE;}
+.card.wrong{border-color:#FFC1C8;opacity:.6;animation:shake .45s;}
+.card.dim{opacity:.45;}
+.card .mark{position:absolute;right:10px;top:8px;font-size:calc(var(--cw)*.16);}
+@keyframes shake{20%,60%{transform:translateX(-10px)}40%,80%{transform:translateX(10px)}}
+.zrow{display:flex;gap:2px;justify-content:center;flex-wrap:wrap;}
+.zc{display:flex;flex-direction:column;align-items:center;min-width:1.2em;}
+.zc b{font-size:var(--zf);line-height:1.15;}
+.zc i{font-style:normal;font-size:calc(var(--zf)*.6);color:var(--muted);font-weight:800;letter-spacing:-.02em;white-space:nowrap;}
+.zc.on b{color:var(--hl);}
+.zc em{font-style:normal;color:var(--hl);font-size:1.25em;}
+.enName{font-size:var(--zf);font-weight:900;line-height:1.15;text-align:center;word-break:break-word;}
+.enName em{font-style:normal;color:var(--hl);font-size:1.3em;}
+.enName small{display:block;font-size:.5em;color:var(--muted);}
+.foot{flex:none;display:flex;justify-content:center;align-items:center;gap:14px;min-height:calc(78px + 22px);padding:6px 12px max(14px,env(safe-area-inset-bottom));}
+.foot .msg{font-size:clamp(22px,3.6vh,36px);font-weight:900;}
+
+.overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:50;background:rgba(30,45,80,.5);}
+.overlay.on{display:flex;}
+.box{background:#fff;border-radius:30px;padding:30px 36px;min-width:min(520px,90vw);max-width:94vw;max-height:94vh;overflow:auto;text-align:center;box-shadow:0 10px 0 var(--line);}
+.box h2{font-size:clamp(30px,5vh,46px);margin:0 0 14px;}
+.col{display:flex;flex-direction:column;gap:14px;align-items:center;}
+.col .bigbtn,.col .btn2{width:min(380px,80vw);}
+.rank{display:flex;flex-direction:column;gap:10px;margin:6px 0 20px;}
+.rrow{display:flex;align-items:center;gap:12px;padding:8px 16px;border-radius:20px;background:#F6FAFF;border:4px solid var(--pc);}
+.rrow .md{font-size:36px;width:46px;text-align:center}
+.rrow .av{width:52px;height:52px;border-radius:50%;background:var(--pc);display:grid;place-items:center;font-size:32px}
+.rrow .nm{flex:1;text-align:left;font-size:26px;font-weight:900}
+.rrow .sc{font-size:26px;font-weight:900;color:var(--pc);white-space:nowrap}
+.rrow.first{background:#FFF6D6}
+.meta{font-size:20px;color:var(--muted);font-weight:700;margin-bottom:18px;line-height:1.6}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:60;}
+</style>
+</head>
+<body>
+
+<section id="home" class="screen">
+  <div class="title" id="homeTitle"></div>
+  <div class="subtitle" id="homeSub"></div>
+  <div class="home-grid">
+    <div class="panel">
+      <h2>🙋 誰要玩？ <small>（輪流回答）</small></h2>
+      <div class="seg" id="segPlayers"></div>
+      <div class="players" id="playerRows"></div>
+    </div>
+    <div class="panel">
+      <div class="setting"><label>🔤 要玩哪一種</label><div class="seg" id="segLang"></div></div>
+      <div class="setting"><label>🖼️ 圖片 <small id="pokeInfo"></small></label><div class="seg" id="segPics"></div>
+        <form class="pokeLock" id="pokeLock" hidden autocomplete="off"><span>🔒 寶可夢圖片要先輸入家庭密碼：</span><input type="password" id="pw" autocapitalize="off" autocorrect="off" spellcheck="false"><button type="submit">打開</button><span id="pwErr" style="color:var(--bad);font-weight:800"></span></form></div>
+      <div class="setting" id="rangeSet"><label>📚 考哪些 <small id="rangeHint"></small></label><div class="seg" id="segRange"></div></div>
+      <div class="setting"><label>🔢 每人幾題</label><div class="seg" id="segRounds"></div></div>
+      <div class="setting"><label>🗣️ 唸出來 <small>iPad 會唸題目和答案</small></label><div class="seg" id="segVoice"></div></div>
+      <div class="setting" style="margin-bottom:0"><label>🔊 音效</label><div class="seg" id="segSound"></div></div>
+    </div>
+  </div>
+  <div class="startbar">
+    <button class="btn2" onclick="location.href='../'">🏠 遊戲選單</button>
+    <button class="bigbtn" id="startBtn">開始玩！</button>
+  </div>
+</section>
+
+<section id="game" class="screen">
+  <div class="topbar">
+    <div class="scores" id="scores"></div>
+    <div class="status">
+      <div class="badge" id="round"></div>
+      <button class="icon" id="muteBtn">🔊</button>
+      <button class="icon" id="pauseBtn">⏸️</button>
+    </div>
+  </div>
+  <div class="ask">
+    <button class="sym" id="sym"></button>
+    <div class="qtext" id="qtext"></div>
+  </div>
+  <div class="cards" id="cards"></div>
+  <div class="foot" id="foot"></div>
+</section>
+
+<div class="overlay" id="pauseModal"><div class="box">
+  <h2>暫停一下</h2>
+  <div class="col">
+    <button class="bigbtn" id="resumeBtn">繼續玩</button>
+    <button class="btn2" id="finishBtn">🏁 結束，看成績</button>
+    <button class="btn2" id="homeBtn">🏠 回首頁</button>
+  </div>
+</div></div>
+<div class="overlay" id="endModal"><div class="box">
+  <h2 id="endTitle"></h2>
+  <div class="rank" id="rank"></div>
+  <div class="meta" id="endMeta"></div>
+  <div class="col">
+    <button class="bigbtn" id="againBtn">再玩一次</button>
+    <button class="btn2" id="endHomeBtn">🏠 回首頁</button>
+  </div>
+</div></div>
+<canvas id="confetti"></canvas>
+
+<script>
+let POKE = {"src": "../pokemon.json?v=0bed33aee3", "list": [[1, "妙蛙種子", "ㄇㄧㄠˋ ㄨㄚ ㄓㄨㄥˇ ˙ㄗ", "Bulbasaur"], [2, "妙蛙草", "ㄇㄧㄠˋ ㄨㄚ ㄘㄠˇ", "Ivysaur"], [3, "妙蛙花", "ㄇㄧㄠˋ ㄨㄚ ㄏㄨㄚ", "Venusaur"], [4, "小火龍", "ㄒㄧㄠˇ ㄏㄨㄛˇ ㄌㄨㄥˊ", "Charmander"], [5, "火恐龍", "ㄏㄨㄛˇ ㄎㄨㄥˇ ㄌㄨㄥˊ", "Charmeleon"], [6, "噴火龍", "ㄆㄣ ㄏㄨㄛˇ ㄌㄨㄥˊ", "Charizard"], [7, "傑尼龜", "ㄐㄧㄝˊ ㄋㄧˊ ㄍㄨㄟ", "Squirtle"], [8, "卡咪龜", "ㄎㄚˇ ㄇㄧ ㄍㄨㄟ", "Wartortle"], [9, "水箭龜", "ㄕㄨㄟˇ ㄐㄧㄢˋ ㄍㄨㄟ", "Blastoise"], [10, "綠毛蟲", "ㄌㄩˋ ㄇㄠˊ ㄔㄨㄥˊ", "Caterpie"], [11, "鐵甲蛹", "ㄊㄧㄝˇ ㄐㄧㄚˇ ㄩㄥˇ", "Metapod"], [12, "巴大蝶", "ㄅㄚ ㄉㄚˋ ㄉㄧㄝˊ", "Butterfree"], [13, "獨角蟲", "ㄉㄨˊ ㄐㄧㄠˇ ㄔㄨㄥˊ", "Weedle"], [14, "鐵殼蛹", "ㄊㄧㄝˇ ㄎㄜˊ ㄩㄥˇ", "Kakuna"], [15, "大針蜂", "ㄉㄚˋ ㄓㄣ ㄈㄥ", "Beedrill"], [16, "波波", "ㄅㄛ ㄅㄛ", "Pidgey"], [17, "比比鳥", "ㄅㄧˇ ㄅㄧˇ ㄋㄧㄠˇ", "Pidgeotto"], [18, "大比鳥", "ㄉㄚˋ ㄅㄧˇ ㄋㄧㄠˇ", "Pidgeot"], [19, "小拉達", "ㄒㄧㄠˇ ㄌㄚ ㄉㄚˊ", "Rattata"], [20, "拉達", "ㄌㄚ ㄉㄚˊ", "Raticate"], [21, "烈雀", "ㄌㄧㄝˋ ㄑㄩㄝˋ", "Spearow"], [22, "大嘴雀", "ㄉㄚˋ ㄗㄨㄟˇ ㄑㄩㄝˋ", "Fearow"], [23, "阿柏蛇", "ㄚ ㄅㄛˊ ㄕㄜˊ", "Ekans"], [24, "阿柏怪", "ㄚ ㄅㄛˊ ㄍㄨㄞˋ", "Arbok"], [25, "皮卡丘", "ㄆㄧˊ ㄎㄚˇ ㄑㄧㄡ", "Pikachu"], [26, "雷丘", "ㄌㄟˊ ㄑㄧㄡ", "Raichu"], [27, "穿山鼠", "ㄔㄨㄢ ㄕㄢ ㄕㄨˇ", "Sandshrew"], [28, "穿山王", "ㄔㄨㄢ ㄕㄢ ㄨㄤˊ", "Sandslash"], [29, "尼多蘭", "ㄋㄧˊ ㄉㄨㄛ ㄌㄢˊ", "Nidoran♀"], [30, "尼多娜", "ㄋㄧˊ ㄉㄨㄛ ㄋㄚˋ", "Nidorina"], [31, "尼多后", "ㄋㄧˊ ㄉㄨㄛ ㄏㄡˋ", "Nidoqueen"], [32, "尼多朗", "ㄋㄧˊ ㄉㄨㄛ ㄌㄤˇ", "Nidoran♂"], [33, "尼多力諾", "ㄋㄧˊ ㄉㄨㄛ ㄌㄧˋ ㄋㄨㄛˋ", "Nidorino"], [34, "尼多王", "ㄋㄧˊ ㄉㄨㄛ ㄨㄤˊ", "Nidoking"], [35, "皮皮", "ㄆㄧˊ ㄆㄧˊ", "Clefairy"], [36, "皮可西", "ㄆㄧˊ ㄎㄜˇ ㄒㄧ", "Clefable"], [37, "六尾", "ㄌㄧㄡˋ ㄨㄟˇ", "Vulpix"], [38, "九尾", "ㄐㄧㄡˇ ㄨㄟˇ", "Ninetales"], [39, "胖丁", "ㄆㄤˋ ㄉㄧㄥ", "Jigglypuff"], [40, "胖可丁", "ㄆㄤˋ ㄎㄜˇ ㄉㄧㄥ", "Wigglytuff"], [41, "超音蝠", "ㄔㄠ ㄧㄣ ㄈㄨˊ", "Zubat"], [42, "大嘴蝠", "ㄉㄚˋ ㄗㄨㄟˇ ㄈㄨˊ", "Golbat"], [43, "走路草", "ㄗㄡˇ ㄌㄨˋ ㄘㄠˇ", "Oddish"], [44, "臭臭花", "ㄔㄡˋ ㄔㄡˋ ㄏㄨㄚ", "Gloom"], [45, "霸王花", "ㄅㄚˋ ㄨㄤˊ ㄏㄨㄚ", "Vileplume"], [46, "派拉斯", "ㄆㄞˋ ㄌㄚ ㄙ", "Paras"], [47, "派拉斯特", "ㄆㄞˋ ㄌㄚ ㄙ ㄊㄜˋ", "Parasect"], [48, "毛球", "ㄇㄠˊ ㄑㄧㄡˊ", "Venonat"], [49, "摩魯蛾", "ㄇㄛˊ ㄌㄨˇ ㄜˊ", "Venomoth"], [50, "地鼠", "ㄉㄧˋ ㄕㄨˇ", "Diglett"], [51, "三地鼠", "ㄙㄢ ㄉㄧˋ ㄕㄨˇ", "Dugtrio"], [52, "喵喵", "ㄇㄧㄠ ㄇㄧㄠ", "Meowth"], [53, "貓老大", "ㄇㄠ ㄌㄠˇ ㄉㄚˋ", "Persian"], [54, "可達鴨", "ㄎㄜˇ ㄉㄚˊ ㄧㄚ", "Psyduck"], [55, "哥達鴨", "ㄍㄜ ㄉㄚˊ ㄧㄚ", "Golduck"], [56, "猴怪", "ㄏㄡˊ ㄍㄨㄞˋ", "Mankey"], [57, "火爆猴", "ㄏㄨㄛˇ ㄅㄠˋ ㄏㄡˊ", "Primeape"], [58, "卡蒂狗", "ㄎㄚˇ ㄉㄧˋ ㄍㄡˇ", "Growlithe"], [59, "風速狗", "ㄈㄥ ㄙㄨˋ ㄍㄡˇ", "Arcanine"], [60, "蚊香蝌蚪", "ㄨㄣˊ ㄒㄧㄤ ㄎㄜ ㄉㄡˇ", "Poliwag"], [61, "蚊香君", "ㄨㄣˊ ㄒㄧㄤ ㄐㄩㄣ", "Poliwhirl"], [62, "蚊香泳士", "ㄨㄣˊ ㄒㄧㄤ ㄩㄥˇ ㄕˋ", "Poliwrath"], [63, "凱西", "ㄎㄞˇ ㄒㄧ", "Abra"], [64, "勇基拉", "ㄩㄥˇ ㄐㄧ ㄌㄚ", "Kadabra"], [65, "胡地", "ㄏㄨˊ ㄉㄧˋ", "Alakazam"], [66, "腕力", "ㄨㄢˋ ㄌㄧˋ", "Machop"], [67, "豪力", "ㄏㄠˊ ㄌㄧˋ", "Machoke"], [68, "怪力", "ㄍㄨㄞˋ ㄌㄧˋ", "Machamp"], [69, "喇叭芽", "ㄌㄚˇ ㄅㄚ ㄧㄚˊ", "Bellsprout"], [70, "口呆花", "ㄎㄡˇ ㄉㄞ ㄏㄨㄚ", "Weepinbell"], [71, "大食花", "ㄉㄚˋ ㄕˊ ㄏㄨㄚ", "Victreebel"], [72, "瑪瑙水母", "ㄇㄚˇ ㄋㄠˇ ㄕㄨㄟˇ ㄇㄨˇ", "Tentacool"], [73, "毒刺水母", "ㄉㄨˊ ㄘˋ ㄕㄨㄟˇ ㄇㄨˇ", "Tentacruel"], [74, "小拳石", "ㄒㄧㄠˇ ㄑㄩㄢˊ ㄕˊ", "Geodude"], [75, "隆隆石", "ㄌㄨㄥˊ ㄌㄨㄥˊ ㄕˊ", "Graveler"], [76, "隆隆岩", "ㄌㄨㄥˊ ㄌㄨㄥˊ ㄧㄢˊ", "Golem"], [77, "小火馬", "ㄒㄧㄠˇ ㄏㄨㄛˇ ㄇㄚˇ", "Ponyta"], [78, "烈焰馬", "ㄌㄧㄝˋ ㄧㄢˋ ㄇㄚˇ", "Rapidash"], [79, "呆呆獸", "ㄉㄞ ㄉㄞ ㄕㄡˋ", "Slowpoke"], [80, "呆殼獸", "ㄉㄞ ㄎㄜˊ ㄕㄡˋ", "Slowbro"], [81, "小磁怪", "ㄒㄧㄠˇ ㄘˊ ㄍㄨㄞˋ", "Magnemite"], [82, "三合一磁怪", "ㄙㄢ ㄏㄜˊ ㄧ ㄘˊ ㄍㄨㄞˋ", "Magneton"], [83, "大蔥鴨", "ㄉㄚˋ ㄘㄨㄥ ㄧㄚ", "Farfetch'd"], [84, "嘟嘟", "ㄉㄨ ㄉㄨ", "Doduo"], [85, "嘟嘟利", "ㄉㄨ ㄉㄨ ㄌㄧˋ", "Dodrio"], [86, "小海獅", "ㄒㄧㄠˇ ㄏㄞˇ ㄕ", "Seel"], [87, "白海獅", "ㄅㄞˊ ㄏㄞˇ ㄕ", "Dewgong"], [88, "臭泥", "ㄔㄡˋ ㄋㄧˊ", "Grimer"], [89, "臭臭泥", "ㄔㄡˋ ㄔㄡˋ ㄋㄧˊ", "Muk"], [90, "大舌貝", "ㄉㄚˋ ㄕㄜˊ ㄅㄟˋ", "Shellder"], [91, "刺甲貝", "ㄘˋ ㄐㄧㄚˇ ㄅㄟˋ", "Cloyster"], [92, "鬼斯", "ㄍㄨㄟˇ ㄙ", "Gastly"], [93, "鬼斯通", "ㄍㄨㄟˇ ㄙ ㄊㄨㄥ", "Haunter"], [94, "耿鬼", "ㄍㄥˇ ㄍㄨㄟˇ", "Gengar"], [95, "大岩蛇", "ㄉㄚˋ ㄧㄢˊ ㄕㄜˊ", "Onix"], [96, "催眠貘", "ㄘㄨㄟ ㄇㄧㄢˊ ㄇㄛˋ", "Drowzee"], [97, "引夢貘人", "ㄧㄣˇ ㄇㄥˋ ㄇㄛˋ ㄖㄣˊ", "Hypno"], [98, "大鉗蟹", "ㄉㄚˋ ㄑㄧㄢˊ ㄒㄧㄝˋ", "Krabby"], [99, "巨鉗蟹", "ㄐㄩˋ ㄑㄧㄢˊ ㄒㄧㄝˋ", "Kingler"], [100, "霹靂電球", "ㄆㄧ ㄌㄧˋ ㄉㄧㄢˋ ㄑㄧㄡˊ", "Voltorb"], [101, "頑皮雷彈", "ㄨㄢˊ ㄆㄧˊ ㄌㄟˊ ㄉㄢˋ", "Electrode"], [102, "蛋蛋", "ㄉㄢˋ ㄉㄢˋ", "Exeggcute"], [103, "椰蛋樹", "ㄧㄝ ㄉㄢˋ ㄕㄨˋ", "Exeggutor"], [104, "卡拉卡拉", "ㄎㄚˇ ㄌㄚ ㄎㄚˇ ㄌㄚ", "Cubone"], [105, "嘎啦嘎啦", "ㄍㄚ ㄌㄚ ㄍㄚ ㄌㄚ", "Marowak"], [106, "飛腿郎", "ㄈㄟ ㄊㄨㄟˇ ㄌㄤˊ", "Hitmonlee"], [107, "快拳郎", "ㄎㄨㄞˋ ㄑㄩㄢˊ ㄌㄤˊ", "Hitmonchan"], [108, "大舌頭", "ㄉㄚˋ ㄕㄜˊ ㄊㄡˊ", "Lickitung"], [109, "瓦斯彈", "ㄨㄚˇ ㄙ ㄉㄢˋ", "Koffing"], [110, "雙彈瓦斯", "ㄕㄨㄤ ㄉㄢˋ ㄨㄚˇ ㄙ", "Weezing"], [111, "獨角犀牛", "ㄉㄨˊ ㄐㄧㄠˇ ㄒㄧ ㄋㄧㄡˊ", "Rhyhorn"], [112, "鑽角犀獸", "ㄗㄨㄢ ㄐㄧㄠˇ ㄒㄧ ㄕㄡˋ", "Rhydon"], [113, "吉利蛋", "ㄐㄧˊ ㄌㄧˋ ㄉㄢˋ", "Chansey"], [114, "蔓藤怪", "ㄇㄢˋ ㄊㄥˊ ㄍㄨㄞˋ", "Tangela"], [115, "袋獸", "ㄉㄞˋ ㄕㄡˋ", "Kangaskhan"], [116, "墨海馬", "ㄇㄛˋ ㄏㄞˇ ㄇㄚˇ", "Horsea"], [117, "海刺龍", "ㄏㄞˇ ㄘˋ ㄌㄨㄥˊ", "Seadra"], [118, "角金魚", "ㄐㄧㄠˇ ㄐㄧㄣ ㄩˊ", "Goldeen"], [119, "金魚王", "ㄐㄧㄣ ㄩˊ ㄨㄤˊ", "Seaking"], [120, "海星星", "ㄏㄞˇ ㄒㄧㄥ ㄒㄧㄥ", "Staryu"], [121, "寶石海星", "ㄅㄠˇ ㄕˊ ㄏㄞˇ ㄒㄧㄥ", "Starmie"], [122, "魔牆人偶", "ㄇㄛˊ ㄑㄧㄤˊ ㄖㄣˊ ㄡˇ", "Mr. Mime"], [123, "飛天螳螂", "ㄈㄟ ㄊㄧㄢ ㄊㄤˊ ㄌㄤˊ", "Scyther"], [124, "迷唇姐", "ㄇㄧˊ ㄔㄨㄣˊ ㄐㄧㄝˇ", "Jynx"], [125, "電擊獸", "ㄉㄧㄢˋ ㄐㄧ ㄕㄡˋ", "Electabuzz"], [126, "鴨嘴火獸", "ㄧㄚ ㄗㄨㄟˇ ㄏㄨㄛˇ ㄕㄡˋ", "Magmar"], [127, "凱羅斯", "ㄎㄞˇ ㄌㄨㄛˊ ㄙ", "Pinsir"], [128, "肯泰羅", "ㄎㄣˇ ㄊㄞˋ ㄌㄨㄛˊ", "Tauros"], [129, "鯉魚王", "ㄌㄧˇ ㄩˊ ㄨㄤˊ", "Magikarp"], [130, "暴鯉龍", "ㄅㄠˋ ㄌㄧˇ ㄌㄨㄥˊ", "Gyarados"], [131, "拉普拉斯", "ㄌㄚ ㄆㄨˇ ㄌㄚ ㄙ", "Lapras"], [132, "百變怪", "ㄅㄞˇ ㄅㄧㄢˋ ㄍㄨㄞˋ", "Ditto"], [133, "伊布", "ㄧ ㄅㄨˋ", "Eevee"], [134, "水伊布", "ㄕㄨㄟˇ ㄧ ㄅㄨˋ", "Vaporeon"], [135, "雷伊布", "ㄌㄟˊ ㄧ ㄅㄨˋ", "Jolteon"], [136, "火伊布", "ㄏㄨㄛˇ ㄧ ㄅㄨˋ", "Flareon"], [137, "多邊獸", "ㄉㄨㄛ ㄅㄧㄢ ㄕㄡˋ", "Porygon"], [138, "菊石獸", "ㄐㄩˊ ㄕˊ ㄕㄡˋ", "Omanyte"], [139, "多刺菊石獸", "ㄉㄨㄛ ㄘˋ ㄐㄩˊ ㄕˊ ㄕㄡˋ", "Omastar"], [140, "化石盔", "ㄏㄨㄚˋ ㄕˊ ㄎㄨㄟ", "Kabuto"], [141, "鐮刀盔", "ㄌㄧㄢˊ ㄉㄠ ㄎㄨㄟ", "Kabutops"], [142, "化石翼龍", "ㄏㄨㄚˋ ㄕˊ ㄧˋ ㄌㄨㄥˊ", "Aerodactyl"], [143, "卡比獸", "ㄎㄚˇ ㄅㄧˇ ㄕㄡˋ", "Snorlax"], [144, "急凍鳥", "ㄐㄧˊ ㄉㄨㄥˋ ㄋㄧㄠˇ", "Articuno"], [145, "閃電鳥", "ㄕㄢˇ ㄉㄧㄢˋ ㄋㄧㄠˇ", "Zapdos"], [146, "火焰鳥", "ㄏㄨㄛˇ ㄧㄢˋ ㄋㄧㄠˇ", "Moltres"], [147, "迷你龍", "ㄇㄧˊ ㄋㄧˇ ㄌㄨㄥˊ", "Dratini"], [148, "哈克龍", "ㄏㄚ ㄎㄜˋ ㄌㄨㄥˊ", "Dragonair"], [149, "快龍", "ㄎㄨㄞˋ ㄌㄨㄥˊ", "Dragonite"], [150, "超夢", "ㄔㄠ ㄇㄥˋ", "Mewtwo"], [151, "夢幻", "ㄇㄥˋ ㄏㄨㄢˋ", "Mew"], [152, "菊草葉", "ㄐㄩˊ ㄘㄠˇ ㄧㄝˋ", "Chikorita"], [155, "火球鼠", "ㄏㄨㄛˇ ㄑㄧㄡˊ ㄕㄨˇ", "Cyndaquil"], [158, "小鋸鱷", "ㄒㄧㄠˇ ㄐㄩˋ ㄜˋ", "Totodile"], [172, "皮丘", "ㄆㄧˊ ㄑㄧㄡ", "Pichu"], [175, "波克比", "ㄅㄛ ㄎㄜˋ ㄅㄧˇ", "Togepi"], [179, "咩利羊", "ㄇㄧㄝ ㄌㄧˋ ㄧㄤˊ", "Mareep"], [181, "電龍", "ㄉㄧㄢˋ ㄌㄨㄥˊ", "Ampharos"], [183, "瑪力露", "ㄇㄚˇ ㄌㄧˋ ㄌㄨˋ", "Marill"], [194, "烏波", "ㄨ ㄅㄛ", "Wooper"], [196, "太陽伊布", "ㄊㄞˋ ㄧㄤˊ ㄧ ㄅㄨˋ", "Espeon"], [197, "月亮伊布", "ㄩㄝˋ ㄌㄧㄤˋ ㄧ ㄅㄨˋ", "Umbreon"], [199, "呆呆王", "ㄉㄞ ㄉㄞ ㄨㄤˊ", "Slowking"], [202, "果然翁", "ㄍㄨㄛˇ ㄖㄢˊ ㄨㄥ", "Wobbuffet"], [203, "麒麟奇", "ㄑㄧˊ ㄌㄧㄣˊ ㄑㄧˊ", "Girafarig"], [208, "大鋼蛇", "ㄉㄚˋ ㄍㄤ ㄕㄜˊ", "Steelix"], [209, "布魯", "ㄅㄨˋ ㄌㄨˇ", "Snubbull"], [212, "巨鉗螳螂", "ㄐㄩˋ ㄑㄧㄢˊ ㄊㄤˊ ㄌㄤˊ", "Scizor"], [214, "赫拉克羅斯", "ㄏㄜˋ ㄌㄚ ㄎㄜˋ ㄌㄨㄛˊ ㄙ", "Heracross"], [216, "熊寶寶", "ㄒㄩㄥˊ ㄅㄠˇ ㄅㄠˇ", "Teddiursa"], [218, "熔岩蟲", "ㄖㄨㄥˊ ㄧㄢˊ ㄔㄨㄥˊ", "Slugma"], [220, "小山豬", "ㄒㄧㄠˇ ㄕㄢ ㄓㄨ", "Swinub"], [225, "信使鳥", "ㄒㄧㄣˋ ㄕˇ ㄋㄧㄠˇ", "Delibird"], [230, "刺龍王", "ㄘˋ ㄌㄨㄥˊ ㄨㄤˊ", "Kingdra"], [231, "小小象", "ㄒㄧㄠˇ ㄒㄧㄠˇ ㄒㄧㄤˋ", "Phanpy"], [232, "頓甲", "ㄉㄨㄣˋ ㄐㄧㄚˇ", "Donphan"], [242, "幸福蛋", "ㄒㄧㄥˋ ㄈㄨˊ ㄉㄢˋ", "Blissey"], [243, "雷公", "ㄌㄟˊ ㄍㄨㄥ", "Raikou"], [244, "炎帝", "ㄧㄢˊ ㄉㄧˋ", "Entei"], [245, "水君", "ㄕㄨㄟˇ ㄐㄩㄣ", "Suicune"], [246, "幼基拉斯", "ㄧㄡˋ ㄐㄧ ㄌㄚ ㄙ", "Larvitar"], [248, "班基拉斯", "ㄅㄢ ㄐㄧ ㄌㄚ ㄙ", "Tyranitar"], [249, "洛奇亞", "ㄌㄨㄛˋ ㄑㄧˊ ㄧㄚˋ", "Lugia"], [250, "鳳王", "ㄈㄥˋ ㄨㄤˊ", "Ho-Oh"], [251, "時拉比", "ㄕˊ ㄌㄚ ㄅㄧˇ", "Celebi"], [252, "木守宮", "ㄇㄨˋ ㄕㄡˇ ㄍㄨㄥ", "Treecko"], [255, "火稚雞", "ㄏㄨㄛˇ ㄓˋ ㄐㄧ", "Torchic"], [258, "水躍魚", "ㄕㄨㄟˇ ㄩㄝˋ ㄩˊ", "Mudkip"], [260, "巨沼怪", "ㄐㄩˋ ㄓㄠˇ ㄍㄨㄞˋ", "Swampert"], [280, "拉魯拉絲", "ㄌㄚ ㄌㄨˇ ㄌㄚ ㄙ", "Ralts"], [282, "沙奈朵", "ㄕㄚ ㄋㄞˋ ㄉㄨㄛˇ", "Gardevoir"], [302, "勾魂眼", "ㄍㄡ ㄏㄨㄣˊ ㄧㄢˇ", "Sableye"], [303, "大嘴娃", "ㄉㄚˋ ㄗㄨㄟˇ ㄨㄚˊ", "Mawile"], [311, "正電拍拍", "ㄓㄥˋ ㄉㄧㄢˋ ㄆㄞ ㄆㄞ", "Plusle"], [312, "負電拍拍", "ㄈㄨˋ ㄉㄧㄢˋ ㄆㄞ ㄆㄞ", "Minun"], [333, "青綿鳥", "ㄑㄧㄥ ㄇㄧㄢˊ ㄋㄧㄠˇ", "Swablu"], [334, "七夕青鳥", "ㄑㄧ ㄒㄧ ㄑㄧㄥ ㄋㄧㄠˇ", "Altaria"], [349, "醜醜魚", "ㄔㄡˇ ㄔㄡˇ ㄩˊ", "Feebas"], [350, "美納斯", "ㄇㄟˇ ㄋㄚˋ ㄙ", "Milotic"], [359, "阿勃梭魯", "ㄚ ㄅㄛˊ ㄙㄨㄛ ㄌㄨˇ", "Absol"], [361, "雪童子", "ㄒㄩㄝˇ ㄊㄨㄥˊ ˙ㄗ", "Snorunt"], [371, "寶貝龍", "ㄅㄠˇ ㄅㄟˋ ㄌㄨㄥˊ", "Bagon"], [373, "暴飛龍", "ㄅㄠˋ ㄈㄟ ㄌㄨㄥˊ", "Salamence"], [380, "拉帝亞斯", "ㄌㄚ ㄉㄧˋ ㄧㄚˋ ㄙ", "Latias"], [381, "拉帝歐斯", "ㄌㄚ ㄉㄧˋ ㄡ ㄙ", "Latios"], [382, "蓋歐卡", "ㄍㄞˋ ㄡ ㄎㄚˇ", "Kyogre"], [383, "固拉多", "ㄍㄨˋ ㄌㄚ ㄉㄨㄛ", "Groudon"], [384, "烈空坐", "ㄌㄧㄝˋ ㄎㄨㄥ ㄗㄨㄛˋ", "Rayquaza"], [385, "基拉祈", "ㄐㄧ ㄌㄚ ㄑㄧˊ", "Jirachi"], [386, "代歐奇希斯", "ㄉㄞˋ ㄡ ㄑㄧˊ ㄒㄧ ㄙ", "Deoxys"], [387, "草苗龜", "ㄘㄠˇ ㄇㄧㄠˊ ㄍㄨㄟ", "Turtwig"], [390, "小火焰猴", "ㄒㄧㄠˇ ㄏㄨㄛˇ ㄧㄢˋ ㄏㄡˊ", "Chimchar"], [393, "波加曼", "ㄅㄛ ㄐㄧㄚ ㄇㄢˋ", "Piplup"], [403, "小貓怪", "ㄒㄧㄠˇ ㄇㄠ ㄍㄨㄞˋ", "Shinx"], [417, "帕奇利茲", "ㄆㄚˋ ㄑㄧˊ ㄌㄧˋ ㄗ", "Pachirisu"], [418, "泳圈鼬", "ㄩㄥˇ ㄑㄩㄢ ㄧㄡˋ", "Buizel"], [427, "捲捲耳", "ㄐㄩㄢˇ ㄐㄩㄢˇ ㄦˇ", "Buneary"], [443, "圓陸鯊", "ㄩㄢˊ ㄌㄨˋ ㄕㄚ", "Gible"], [445, "烈咬陸鯊", "ㄌㄧㄝˋ ㄧㄠˇ ㄌㄨˋ ㄕㄚ", "Garchomp"], [446, "小卡比獸", "ㄒㄧㄠˇ ㄎㄚˇ ㄅㄧˇ ㄕㄡˋ", "Munchlax"], [447, "利歐路", "ㄌㄧˋ ㄡ ㄌㄨˋ", "Riolu"], [448, "路卡利歐", "ㄌㄨˋ ㄎㄚˇ ㄌㄧˋ ㄡ", "Lucario"], [470, "葉伊布", "ㄧㄝˋ ㄧ ㄅㄨˋ", "Leafeon"], [471, "冰伊布", "ㄅㄧㄥ ㄧ ㄅㄨˋ", "Glaceon"], [483, "帝牙盧卡", "ㄉㄧˋ ㄧㄚˊ ㄌㄨˊ ㄎㄚˇ", "Dialga"], [484, "帕路奇亞", "ㄆㄚˋ ㄌㄨˋ ㄑㄧˊ ㄧㄚˋ", "Palkia"], [487, "騎拉帝納", "ㄑㄧˊ ㄌㄚ ㄉㄧˋ ㄋㄚˋ", "Giratina"], [493, "阿爾宙斯", "ㄚ ㄦˇ ㄓㄡˋ ㄙ", "Arceus"], [494, "比克提尼", "ㄅㄧˇ ㄎㄜˋ ㄊㄧˊ ㄋㄧˊ", "Victini"], [495, "藤藤蛇", "ㄊㄥˊ ㄊㄥˊ ㄕㄜˊ", "Snivy"], [498, "暖暖豬", "ㄋㄨㄢˇ ㄋㄨㄢˇ ㄓㄨ", "Tepig"], [501, "水水獺", "ㄕㄨㄟˇ ㄕㄨㄟˇ ㄊㄚˇ", "Oshawott"], [570, "索羅亞", "ㄙㄨㄛˇ ㄌㄨㄛˊ ㄧㄚˋ", "Zorua"], [571, "索羅亞克", "ㄙㄨㄛˇ ㄌㄨㄛˊ ㄧㄚˋ ㄎㄜˋ", "Zoroark"], [607, "燭光靈", "ㄓㄨˊ ㄍㄨㄤ ㄌㄧㄥˊ", "Litwick"], [610, "牙牙", "ㄧㄚˊ ㄧㄚˊ", "Axew"], [643, "萊希拉姆", "ㄌㄞˊ ㄒㄧ ㄌㄚ ㄇㄨˇ", "Reshiram"], [644, "捷克羅姆", "ㄐㄧㄝˊ ㄎㄜˋ ㄌㄨㄛˊ ㄇㄨˇ", "Zekrom"], [650, "哈力栗", "ㄏㄚ ㄌㄧˋ ㄌㄧˋ", "Chespin"], [653, "火狐狸", "ㄏㄨㄛˇ ㄏㄨˊ ㄌㄧˊ", "Fennekin"], [656, "呱呱泡蛙", "ㄍㄨ ㄍㄨ ㄆㄠˋ ㄨㄚ", "Froakie"], [658, "甲賀忍蛙", "ㄐㄧㄚˇ ㄏㄜˋ ㄖㄣˇ ㄨㄚ", "Greninja"], [700, "仙子伊布", "ㄒㄧㄢ ˙ㄗ ㄧ ㄅㄨˋ", "Sylveon"], [702, "咚咚鼠", "ㄉㄨㄥ ㄉㄨㄥ ㄕㄨˇ", "Dedenne"], [716, "哲爾尼亞斯", "ㄓㄜˊ ㄦˇ ㄋㄧˊ ㄧㄚˋ ㄙ", "Xerneas"], [717, "伊裴爾塔爾", "ㄧ ㄆㄟˊ ㄦˇ ㄊㄚˇ ㄦˇ", "Yveltal"], [722, "木木梟", "ㄇㄨˋ ㄇㄨˋ ㄒㄧㄠ", "Rowlet"], [725, "火斑喵", "ㄏㄨㄛˇ ㄅㄢ ㄇㄧㄠ", "Litten"], [728, "球球海獅", "ㄑㄧㄡˊ ㄑㄧㄡˊ ㄏㄞˇ ㄕ", "Popplio"], [744, "岩狗狗", "ㄧㄢˊ ㄍㄡˇ ㄍㄡˇ", "Rockruff"], [778, "謎擬Ｑ", "ㄇㄧˊ ㄋㄧˇ", "Mimikyu"], [810, "敲音猴", "ㄑㄧㄠ ㄧㄣ ㄏㄡˊ", "Grookey"], [813, "炎兔兒", "ㄧㄢˊ ㄊㄨˋ ㄦˊ", "Scorbunny"], [816, "淚眼蜥", "ㄌㄟˋ ㄧㄢˇ ㄒㄧ", "Sobble"], [823, "鋼鎧鴉", "ㄍㄤ ㄎㄞˇ ㄧㄚ", "Corviknight"], [831, "毛辮羊", "ㄇㄠˊ ㄅㄧㄢˋ ㄧㄤˊ", "Wooloo"], [845, "古月鳥", "ㄍㄨˇ ㄩㄝˋ ㄋㄧㄠˇ", "Cramorant"], [888, "蒼響", "ㄘㄤ ㄒㄧㄤˇ", "Zacian"], [889, "藏瑪然特", "ㄗㄤˋ ㄇㄚˇ ㄖㄢˊ ㄊㄜˋ", "Zamazenta"], [906, "新葉喵", "ㄒㄧㄣ ㄧㄝˋ ㄇㄧㄠ", "Sprigatito"], [909, "呆火鱷", "ㄉㄞ ㄏㄨㄛˇ ㄜˋ", "Fuecoco"], [912, "潤水鴨", "ㄖㄨㄣˋ ㄕㄨㄟˇ ㄧㄚ", "Quaxly"], [921, "布撥", "ㄅㄨˋ ㄅㄛ", "Pawmi"], [925, "一家鼠", "ㄧ ㄐㄧㄚ ㄕㄨˇ", "Maushold"], [1007, "故勒頓", "ㄍㄨˋ ㄌㄜˋ ㄉㄨㄣˋ", "Koraidon"], [1008, "密勒頓", "ㄇㄧˋ ㄌㄜˋ ㄉㄨㄣˋ", "Miraidon"]], "plain": false};      // 打包時放入：{src: 加密圖片檔, list: [[編號, 中文名, 注音, 英文名], ...]}
+const EMOJI = [["🍎","蘋果","ㄆㄧㄥˊ ㄍㄨㄛˇ","Apple"],["🍌","香蕉","ㄒㄧㄤ ㄐㄧㄠ","Banana"],["🐱","貓咪","ㄇㄠ ㄇㄧ","Cat"],["🐶","小狗","ㄒㄧㄠˇ ㄍㄡˇ","Dog"],["🥚","雞蛋","ㄐㄧ ㄉㄢˋ","Egg"],["🐸","青蛙","ㄑㄧㄥ ㄨㄚ","Frog"],["🍇","葡萄","ㄆㄨˊ ㄊㄠˊ","Grapes"],["🐴","馬","ㄇㄚˇ","Horse"],["🍦","冰淇淋","ㄅㄧㄥ ㄑㄧˊ ㄌㄧㄣˊ","Ice cream"],["🧃","果汁","ㄍㄨㄛˇ ㄓ","Juice"],["🪁","風箏","ㄈㄥ ㄓㄥ","Kite"],["🦁","獅子","ㄕ ˙ㄗ","Lion"],["🐒","猴子","ㄏㄡˊ ˙ㄗ","Monkey"],["👃","鼻子","ㄅㄧˊ ˙ㄗ","Nose"],["🐙","章魚","ㄓㄤ ㄩˊ","Octopus"],["🐷","豬","ㄓㄨ","Pig"],["👸","皇后","ㄏㄨㄤˊ ㄏㄡˋ","Queen"],["🐰","兔子","ㄊㄨˋ ˙ㄗ","Rabbit"],["☀️","太陽","ㄊㄞˋ ㄧㄤˊ","Sun"],["🐯","老虎","ㄌㄠˇ ㄏㄨˇ","Tiger"],["☂️","雨傘","ㄩˇ ㄙㄢˇ","Umbrella"],["🎻","小提琴","ㄒㄧㄠˇ ㄊㄧˊ ㄑㄧㄣˊ","Violin"],["🍉","西瓜","ㄒㄧ ㄍㄨㄚ","Watermelon"],["🩻","","","X-ray"],["🪀","溜溜球","ㄌㄧㄡ ㄌㄧㄡ ㄑㄧㄡˊ","Yo-yo"],["🦓","斑馬","ㄅㄢ ㄇㄚˇ","Zebra"],["🐻","熊","ㄒㄩㄥˊ","Bear"],["🚗","汽車","ㄑㄧˋ ㄔㄜ","Car"],["🦆","鴨子","ㄧㄚ ˙ㄗ","Duck"],["🐘","大象","ㄉㄚˋ ㄒㄧㄤˋ","Elephant"],["🐟","魚","ㄩˊ","Fish"],["🦒","長頸鹿","ㄔㄤˊ ㄐㄧㄥˇ ㄌㄨˋ","Giraffe"],["🏠","房子","ㄈㄤˊ ˙ㄗ","House"],["🧊","冰塊","ㄅㄧㄥ ㄎㄨㄞˋ","Ice"],["🐨","無尾熊","ㄨˊ ㄨㄟˇ ㄒㄩㄥˊ","Koala"],["🍋","檸檬","ㄋㄧㄥˊ ㄇㄥˊ","Lemon"],["🌙","月亮","ㄩㄝˋ ㄌㄧㄤˋ","Moon"],["🍊","橘子","ㄐㄩˊ ˙ㄗ","Orange"],["🦉","貓頭鷹","ㄇㄠ ㄊㄡˊ ㄧㄥ","Owl"],["🐼","熊貓","ㄒㄩㄥˊ ㄇㄠ","Panda"],["🌈","彩虹","ㄘㄞˇ ㄏㄨㄥˊ","Rainbow"],["🚀","火箭","ㄏㄨㄛˇ ㄐㄧㄢˋ","Rocket"],["⭐","星星","ㄒㄧㄥ ㄒㄧㄥ","Star"],["🐍","蛇","ㄕㄜˊ","Snake"],["🚂","火車","ㄏㄨㄛˇ ㄔㄜ","Train"],["🐢","烏龜","ㄨ ㄍㄨㄟ","Turtle"],["🦄","獨角獸","ㄉㄨˊ ㄐㄧㄠˇ ㄕㄡˋ","Unicorn"],["🌋","火山","ㄏㄨㄛˇ ㄕㄢ","Volcano"],["🐋","鯨魚","ㄐㄧㄥ ㄩˊ","Whale"],["🧶","毛線","ㄇㄠˊ ㄒㄧㄢˋ","Yarn"],["🍞","麵包","ㄇㄧㄢˋ ㄅㄠ","Bread"],["✈️","飛機","ㄈㄟ ㄐㄧ","Airplane"],["🍯","蜂蜜","ㄈㄥ ㄇㄧˋ","Honey"],["🎂","蛋糕","ㄉㄢˋ ㄍㄠ","Cake"],["🍩","甜甜圈","ㄊㄧㄢˊ ㄊㄧㄢˊ ㄑㄩㄢ","Donut"],["🐮","乳牛","ㄖㄨˇ ㄋㄧㄡˊ","Cow"],["🍼","奶瓶","ㄋㄞˇ ㄆㄧㄥˊ","Baby bottle"],["🏀","籃球","ㄌㄢˊ ㄑㄧㄡˊ","Basketball"],["🐉","龍","ㄌㄨㄥˊ","Dragon"],["🐓","公雞","ㄍㄨㄥ ㄐㄧ","Rooster"],["🕊️","鴿子","ㄍㄜ ˙ㄗ","Dove"],["🦖","恐龍","ㄎㄨㄥˇ ㄌㄨㄥˊ","Dinosaur"],["🦚","孔雀","ㄎㄨㄥˇ ㄑㄩㄝˋ","Peacock"],["👖","褲子","ㄎㄨˋ ˙ㄗ","Jeans"],["🥕","胡蘿蔔","ㄏㄨˊ ㄌㄨㄛˊ ㄅㄛˊ","Carrot"],["🦛","河馬","ㄏㄜˊ ㄇㄚˇ","Hippo"],["🌷","花","ㄏㄨㄚ","Flower"],["🐧","企鵝","ㄑㄧˇ ㄜˊ","Penguin"],["🎈","氣球","ㄑㄧˋ ㄑㄧㄡˊ","Balloon"],["🦐","蝦子","ㄒㄧㄚ ˙ㄗ","Shrimp"],["👟","鞋子","ㄒㄧㄝˊ ˙ㄗ","Shoe"],["⛄","雪人","ㄒㄩㄝˇ ㄖㄣˊ","Snowman"],["🕷️","蜘蛛","ㄓ ㄓㄨ","Spider"],["🍴","叉子","ㄔㄚ ˙ㄗ","Fork"],["🛏️","床","ㄔㄨㄤˊ","Bed"],["📖","書","ㄕㄨ","Book"],["🌳","樹","ㄕㄨˋ","Tree"],["🐭","老鼠","ㄌㄠˇ ㄕㄨˇ","Mouse"],["🌭","熱狗","ㄖㄜˋ ㄍㄡˇ","Hot dog"],["🐠","熱帶魚","ㄖㄜˋ ㄉㄞˋ ㄩˊ","Fish"],["⚽","足球","ㄗㄨˊ ㄑㄧㄡˊ","Soccer ball"],["👄","嘴巴","ㄗㄨㄟˇ ㄅㄚ","Mouth"],["🍓","草莓","ㄘㄠˇ ㄇㄟˊ","Strawberry"],["🦔","刺蝟","ㄘˋ ㄨㄟˋ","Hedgehog"],["🐿️","松鼠","ㄙㄨㄥ ㄕㄨˇ","Squirrel"],["🥪","三明治","ㄙㄢ ㄇㄧㄥˊ ㄓˋ","Sandwich"],["🧄","大蒜","ㄉㄚˋ ㄙㄨㄢˋ","Garlic"],["👓","眼鏡","ㄧㄢˇ ㄐㄧㄥˋ","Glasses"],["🥥","椰子","ㄧㄝˊ ˙ㄗ","Coconut"],["🐑","綿羊","ㄇㄧㄢˊ ㄧㄤˊ","Sheep"],["🐌","蝸牛","ㄨㄛ ㄋㄧㄡˊ","Snail"],["🧦","襪子","ㄨㄚˋ ˙ㄗ","Socks"],["🥣","碗","ㄨㄢˇ","Bowl"],["🌽","玉米","ㄩˋ ㄇㄧˇ","Corn"],["🔑","鑰匙","ㄧㄠˋ ˙ㄕ","Key"],["🪺","鳥巢","ㄋㄧㄠˇ ㄔㄠˊ","Nest"],["🚐","廂型車","ㄒㄧㄤ ㄒㄧㄥˊ ㄔㄜ","Van"],["🪼","水母","ㄕㄨㄟˇ ㄇㄨˇ","Jellyfish"],["🏝️","小島","ㄒㄧㄠˇ ㄉㄠˇ","Island"],["🦀","螃蟹","ㄆㄤˊ ㄒㄧㄝˋ","Crab"],["🐛","毛毛蟲","ㄇㄠˊ ㄇㄠˊ ㄔㄨㄥˊ","Caterpillar"],["🦋","蝴蝶","ㄏㄨˊ ㄉㄧㄝˊ","Butterfly"],["🐝","蜜蜂","ㄇㄧˋ ㄈㄥ","Bee"],["🐞","瓢蟲","ㄆㄧㄠˊ ㄔㄨㄥˊ","Ladybug"],["🍕","披薩","ㄆㄧ ㄙㄚˋ","Pizza"],["🍔","漢堡","ㄏㄢˋ ㄅㄠˇ","Hamburger"],["🧁","杯子蛋糕","ㄅㄟ ˙ㄗ ㄉㄢˋ ㄍㄠ","Cupcake"],["🍭","棒棒糖","ㄅㄤˋ ㄅㄤˋ ㄊㄤˊ","Lollipop"],["🚲","腳踏車","ㄐㄧㄠˇ ㄊㄚˋ ㄔㄜ","Bicycle"],["🚌","公車","ㄍㄨㄥ ㄔㄜ","Bus"],["🚁","直升機","ㄓˊ ㄕㄥ ㄐㄧ","Helicopter"],["⛵","帆船","ㄈㄢ ㄔㄨㄢˊ","Sailboat"],["⏰","鬧鐘","ㄋㄠˋ ㄓㄨㄥ","Alarm clock"],["📺","電視","ㄉㄧㄢˋ ㄕˋ","TV"],["✂️","剪刀","ㄐㄧㄢˇ ㄉㄠ","Scissors"],["👑","皇冠","ㄏㄨㄤˊ ㄍㄨㄢ","Crown"],["🎸","吉他","ㄐㄧˊ ㄊㄚ","Guitar"],["🥁","鼓","ㄍㄨˇ","Drum"],["🦷","牙齒","ㄧㄚˊ ㄔˇ","Tooth"],["👂","耳朵","ㄦˇ ㄉㄨㄛˇ","Ear"],["🪿","鵝","ㄜˊ","Goose"],["❤️","愛心","ㄞˋ ㄒㄧㄣ","Heart"],["⛑️","安全帽","ㄢ ㄑㄩㄢˊ ㄇㄠˋ","Helmet"],["🐜","螞蟻","ㄇㄚˇ ㄧˇ","Ant"],["🦦","水獺","ㄕㄨㄟˇ ㄊㄚˇ","Otter"],["🐺","野狼","ㄧㄝˇ ㄌㄤˊ","Wolf"],["🦊","狐狸","ㄏㄨˊ ㄌㄧˊ","Fox"]];      // 內建物品：[圖, 中文名, 注音, 英文名]
+const $ = id => document.getElementById(id);
+const TEAM_COLORS = ['var(--p0)','var(--p1)','var(--p2)','var(--p3)'];
+const ANIMALS = ['🐰','🐻','🐱','🐶','🐼','🦊','🐯','🐸','🐧','🦁','🐵','🐨','🐷','🐮','🦄','🐥'];
+const DEFAULT_NAMES = ['玩家1','玩家2','玩家3','玩家4'];
+const INITIALS = [...'ㄅㄆㄇㄈㄉㄊㄋㄌㄍㄎㄏㄐㄑㄒㄓㄔㄕㄖㄗㄘㄙ'];
+const FINALS = [...'ㄧㄨㄩㄚㄛㄜㄝㄞㄟㄠㄡㄢㄣㄤㄥㄦ'];
+const START_OK = new Set([...INITIALS, 'ㄧ', 'ㄨ', 'ㄩ', 'ㄚ']);   // 這些問「開頭」；其他韻母很少放在字的最前面，改問「名字裡有」
+const LETTERS = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
+const ZY_SAY = {ㄅ:'玻',ㄆ:'坡',ㄇ:'摸',ㄈ:'佛',ㄉ:'得',ㄊ:'特',ㄋ:'訥',ㄌ:'勒',ㄍ:'哥',ㄎ:'科',ㄏ:'喝',ㄐ:'基',ㄑ:'欺',ㄒ:'希',ㄓ:'知',ㄔ:'吃',ㄕ:'詩',ㄖ:'日',ㄗ:'資',ㄘ:'疵',ㄙ:'思',
+  ㄧ:'衣',ㄨ:'屋',ㄩ:'迂',ㄚ:'啊',ㄛ:'喔',ㄜ:'鵝',ㄝ:'欸',ㄞ:'哀',ㄟ:'誒',ㄠ:'凹',ㄡ:'歐',ㄢ:'安',ㄣ:'恩',ㄤ:'昂',ㄥ:'鞥',ㄦ:'兒'};
+const LOOKALIKE = { ㄅ:'ㄆㄉ', ㄆ:'ㄅㄊ', ㄇ:'ㄋㄈ', ㄈ:'ㄏㄇ', ㄉ:'ㄊㄅ', ㄊ:'ㄉㄆ', ㄋ:'ㄌㄇ', ㄌ:'ㄋㄖ', ㄍ:'ㄎ', ㄎ:'ㄍㄏ', ㄏ:'ㄈㄎ', ㄐ:'ㄓㄑ', ㄑ:'ㄐㄔ', ㄒ:'ㄕㄙ', ㄓ:'ㄗㄐ', ㄔ:'ㄘㄑ', ㄕ:'ㄙㄒ', ㄖ:'ㄌ', ㄗ:'ㄓ', ㄘ:'ㄔ', ㄙ:'ㄕ', ㄧ:'ㄩ', ㄨ:'ㄩ', ㄩ:'ㄧㄨ',
+  B:'DP', D:'BP', P:'BQR', Q:'PO', M:'NW', N:'MH', W:'MV', V:'WY', C:'GKS', G:'CJ', K:'CX', S:'CZ', I:'JL', J:'IG', E:'FB', F:'EP', H:'NK', L:'IT', T:'LF', O:'QC', U:'VW', R:'PB', A:'H', X:'K', Y:'V', Z:'S' };
+
+let settings = { players: 2, lang: 'zh', pics: 'mix', range: 'all', rounds: 5, voice: true, sound: true, ucase: true };
+let players = [0,1,2,3].map(i => ({name: DEFAULT_NAMES[i], emoji: ANIMALS[i]}));
+try { Object.assign(settings, JSON.parse(localStorage.getItem('abcgame-settings') || '{}')); } catch(e) {}
+try { const f = JSON.parse(localStorage.getItem('flipgame-settings') || 'null'); if (f && f.players) players = f.players; } catch(e) {}
+function save(){ try {
+  localStorage.setItem('abcgame-settings', JSON.stringify(settings));
+  const f = JSON.parse(localStorage.getItem('flipgame-settings') || '{}'); f.players = players; localStorage.setItem('flipgame-settings', JSON.stringify(f));
+} catch(e) {} }
+
+/* 題目資料：每個東西都整理成 {pic, zh, zy:[每個字的注音], en} */
+const parseZy = s => s ? s.split(' ') : [];
+const emojiItems = EMOJI.map(([ch, zh, zy, en]) => ({ kind: 'emoji', ch, zh, zy: parseZy(zy), en }));
+let pokeItems = [], pokeState = POKE && POKE.list && POKE.list.length ? 'locked' : 'none';   // none | locked | loading | ready | error
+const firstZy = it => it.zy.length ? it.zy[0].replace('˙', '')[0] : '';
+const firstEn = it => (it.en || '').replace(/[^A-Za-z]/g, '')[0]?.toUpperCase() || '';
+
+/* 音效與唸讀 */
+let actx = null;
+function audio(){ if (!actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {} } if (actx && actx.state === 'suspended') actx.resume(); return actx; }
+function tone(f, d, {type='sine', vol=.18, at=0, slide=0} = {}){
+  if (!settings.sound) return; const a = audio(); if (!a) return;
+  const t = a.currentTime + at, o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(slide, t + d);
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + .015); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t + d + .05);
+}
+const SFX = {
+  pick(){ tone(700, .07, {type:'triangle', vol:.13}); },
+  ok(){ [784,988,1175,1568].forEach((f,i) => tone(f, .18, {type:'triangle', at:i*.08})); },
+  bad(){ tone(300, .25, {type:'square', vol:.07, slide:200}); },
+  win(){ [523,523,523,659,587,659,784,1047].forEach((f,i) => tone(f, .26, {type:'triangle', at:[0,.15,.3,.45,.75,.9,1.05,1.3][i], vol:.2})); }
+};
+let voices = [];
+function loadVoices(){ try { voices = speechSynthesis.getVoices(); } catch(e) {} }
+if (window.speechSynthesis) { loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
+function say(text, lang){
+  if (!settings.voice || !window.speechSynthesis || !text) return;
+  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = lang; u.rate = .85;
+    const norm = v => v.lang.replace('_', '-'); const v = voices.find(v => norm(v) === lang) || voices.find(v => norm(v).startsWith(lang.slice(0, 2)));
+    if (v) u.voice = v; speechSynthesis.speak(u); } catch(e) {}
+}
+
+/* 首頁 */
+function seg(el, opts, cur, pick){ el.innerHTML = '';
+  opts.forEach(([v, l, dis]) => { const b = document.createElement('button'); b.textContent = l; b.disabled = !!dis; if (v === cur) b.classList.add('sel'); b.onclick = () => { audio(); SFX.pick(); pick(v); }; el.appendChild(b); }); }
+function renderHome(){
+  const zh = settings.lang === 'zh';
+  $('homeTitle').innerHTML = (zh ? '注音找找看' : 'ABC 找找看').split('').map(c => c === ' ' ? ' ' : `<span>${c}</span>`).join('');
+  $('homeSub').textContent = zh ? '看看上面的注音，找出名字是它開頭（或名字裡有它）的那一張！' : '看看上面的英文字母，找出英文名字是它開頭的那一張！';
+  seg($('segPlayers'), [[1,'1 人'],[2,'2 人'],[3,'3 人'],[4,'4 人']], settings.players, v => { settings.players = v; save(); renderHome(); });
+  const box = $('playerRows'); box.innerHTML = '';
+  for (let i = 0; i < settings.players; i++) {
+    const p = players[i], r = document.createElement('div'); r.className = 'prow'; r.style.setProperty('--pc', TEAM_COLORS[i]);
+    r.innerHTML = `<button class="avatar">${p.emoji}</button><input maxlength="6">`; r.querySelector('input').value = p.name;
+    r.querySelector('.avatar').onclick = e => { audio(); SFX.pick(); const used = players.slice(0, settings.players).map(x => x.emoji); let k = ANIMALS.indexOf(p.emoji);
+      do { k = (k + 1) % ANIMALS.length; } while (used.includes(ANIMALS[k]) && ANIMALS[k] !== p.emoji); p.emoji = ANIMALS[k]; e.currentTarget.textContent = p.emoji; save(); };
+    r.querySelector('input').oninput = e => { p.name = e.target.value; save(); };
+    box.appendChild(r);
+  }
+  seg($('segLang'), [['zh','ㄅㄆㄇ 注音'],['en','ABC 英文']], settings.lang, v => { settings.lang = v; save(); renderHome(); });
+  const pokeOK = pokeState === 'ready';
+  if (!pokeOK && settings.pics !== 'emoji') settings.pics = pokeState === 'none' ? 'emoji' : settings.pics;
+  seg($('segPics'), [['poke','寶可夢', !pokeOK],['emoji','生活物品'],['mix','混在一起', !pokeOK]], pokeOK ? settings.pics : 'emoji', v => { settings.pics = v; save(); renderHome(); });
+  $('pokeInfo').textContent = { none: '（寶可夢資料夾還沒有圖片，先用生活物品）', locked: '', loading: '（寶可夢圖片載入中…）', ready: `（寶可夢 ${pokeItems.length} 隻、生活物品 ${emojiItems.length} 個）`, error: '（寶可夢圖片載入失敗）' }[pokeState];
+  $('pokeLock').hidden = pokeState !== 'locked';
+  if (zh) {
+    seg($('segRange'), [['all','全部 37 個'],['ini','ㄅ～ㄙ 21 個'],['fin','ㄧㄨㄩ ㄚ～ㄦ 16 個']], settings.range, v => { settings.range = v; save(); renderHome(); });
+    $('rangeHint').textContent = 'ㄅ～ㄙ、ㄧㄨㄩ、ㄚ 問「開頭」；ㄛ～ㄦ 很少放在最前面，改問「名字裡有」';
+  } else {
+    seg($('segRange'), [[true,'大寫 ABC'],[false,'小寫 abc']], settings.ucase, v => { settings.ucase = v; save(); renderHome(); });
+    $('rangeHint').textContent = '26 個字母都會考';
+  }
+  seg($('segRounds'), [[5,'5 題'],[10,'10 題'],[15,'15 題']], settings.rounds, v => { settings.rounds = v; save(); renderHome(); });
+  seg($('segVoice'), [[true,'開'],[false,'關']], settings.voice, v => { settings.voice = v; save(); renderHome(); });
+  seg($('segSound'), [[true,'開'],[false,'關']], settings.sound, v => { settings.sound = v; save(); renderHome(); });
+}
+
+/* 出題 */
+function shuffle(a){ for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+const pickOne = a => a[Math.floor(Math.random() * a.length)];
+function pool(){
+  const pics = pokeState === 'ready' ? settings.pics : 'emoji';
+  let p = pics === 'poke' ? pokeItems : pics === 'emoji' ? emojiItems : pokeItems.concat(emojiItems);
+  return settings.lang === 'zh' ? p.filter(it => it.zh && it.zy.length) : p.filter(it => firstEn(it));
+}
+function symbols(){
+  if (settings.lang === 'en') return LETTERS;
+  return settings.range === 'ini' ? INITIALS : settings.range === 'fin' ? FINALS : INITIALS.concat(FINALS);
+}
+/* 這張圖算不算答對：mode = start（開頭）或 has（名字裡有） */
+function matches(it, sym, mode){
+  if (settings.lang === 'en') return firstEn(it) === sym;
+  return mode === 'start' ? firstZy(it) === sym : it.zy.join('').includes(sym);
+}
+function makeQuestion(){
+  const P = pool(); if (P.length < 3) return null;
+  for (let tries = 0; tries < 80; tries++) {
+    if (!G.symQueue.length) G.symQueue = shuffle(symbols().slice());
+    const sym = G.symQueue.shift();
+    let mode = 'start';
+    if (settings.lang === 'zh') mode = START_OK.has(sym) && P.some(it => firstZy(it) === sym) ? 'start' : 'has';
+    const rights = P.filter(it => matches(it, sym, mode)), wrongs = P.filter(it => !matches(it, sym, mode));
+    if (!rights.length || wrongs.length < 2) continue;
+    const fresh = rights.filter(it => !G.used.has(it)), ans = pickOne(fresh.length ? fresh : rights);
+    const look = LOOKALIKE[sym] || '', key = it => settings.lang === 'en' ? firstEn(it) : firstZy(it);
+    const similar = shuffle(wrongs.filter(it => look.includes(key(it)) && !G.used.has(it)));
+    const others = shuffle(wrongs.filter(it => !similar.includes(it)));
+    const ds = [];
+    if (similar.length && Math.random() < .7) ds.push(similar[0]);
+    for (const it of others) { if (ds.length >= 2) break; if (!ds.includes(it) && key(it) !== (ds[0] && key(ds[0]))) ds.push(it); }
+    for (const it of others) { if (ds.length >= 2) break; if (!ds.includes(it)) ds.push(it); }
+    if (ds.length < 2) continue;
+    G.used.add(ans); ds.forEach(d => G.used.add(d));
+    return { sym, mode, ans, opts: shuffle([ans, ...ds]) };
+  }
+  return null;
+}
+
+/* 遊戲 */
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+function show(id){ document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === id)); }
+let G = null;
+function startGame(){
+  audio(); if (pool().length < 3) { alert('圖片不夠，至少要 3 張'); return; }
+  const ps = players.slice(0, settings.players).map((p, i) => ({name: (p.name || '').trim() || DEFAULT_NAMES[i], emoji: p.emoji, color: TEAM_COLORS[i], score: 0}));
+  G = { players: ps, turn: 0, qn: 0, total: settings.rounds * ps.length, symQueue: [], used: new Set(), q: null, tries: 0, done: false };
+  $('muteBtn').textContent = settings.sound ? '🔊' : '🔇';
+  show('game'); nextQuestion();
+}
+function renderScores(){
+  const box = $('scores'); box.innerHTML = '';
+  G.players.forEach((p, i) => { const c = document.createElement('div'); c.className = 'chip' + (i === G.turn ? ' turn' : ''); c.style.setProperty('--pc', p.color);
+    c.innerHTML = `<div class="av">${p.emoji}</div><div class="nm"></div><div class="sc">${p.score}</div>`; c.querySelector('.nm').textContent = p.name; box.appendChild(c); });
+}
+const showSym = s => settings.lang === 'en' ? (settings.ucase ? s : s.toLowerCase()) : s;
+function nextQuestion(){
+  if (G.qn >= G.total) return endGame();
+  const q = makeQuestion(); if (!q) return endGame();
+  G.q = q; G.tries = 0; G.done = false; G.turn = G.qn % G.players.length;
+  renderScores(); $('round').textContent = `第 ${G.qn + 1} / ${G.total} 題`;
+  const p = G.players[G.turn], S = showSym(q.sym);
+  $('sym').innerHTML = `${S}<small>🔊</small>`;
+  const who = G.players.length > 1 ? `<span class="who" style="--pc:${p.color}">${p.emoji} <span class="pn"></span></span>，` : '';
+  $('qtext').innerHTML = settings.lang === 'en'
+    ? `${who}哪一個是 <span class="s">${S}</span> 開頭？<span class="sub">Which one starts with “${S}”?</span>`
+    : q.mode === 'start' ? `${who}誰的名字是 <span class="s">${S}</span> 開頭？` : `${who}誰的名字裡有 <span class="s">${S}</span>？`;
+  const pn = $('qtext').querySelector('.pn'); if (pn) pn.textContent = p.name;
+  const box = $('cards'); box.innerHTML = '';
+  q.opts.forEach(it => {
+    const c = document.createElement('button'); c.className = 'card';
+    c.innerHTML = `<div class="pic">${it.kind === 'emoji' ? it.ch : `<img src="${it.src}" alt="">`}</div><div class="nm"><span class="q">？</span></div>`;
+    c.onclick = () => choose(it, c); box.appendChild(c);
+  });
+  $('foot').innerHTML = ''; fitCards(); speakSym();
+}
+function speakSym(){ const q = G && G.q; if (!q) return; settings.lang === 'en' ? say(q.sym, 'en-US') : say(ZY_SAY[q.sym] || q.sym, 'zh-TW'); }
+$('sym').onclick = () => { audio(); speakSym(); };
+function fitCards(){
+  if (!$('game').classList.contains('on')) return;
+  const box = $('cards'), w = box.clientWidth - 28, h = box.clientHeight - 16, gap = Math.min(36, Math.max(12, innerWidth * .024));
+  const cw = Math.floor(Math.max(110, Math.min((w - gap * 2) / 3, h / 1.38)));
+  box.style.setProperty('--cw', cw + 'px'); box.style.setProperty('--zf', Math.round(cw * .16) + 'px');
+}
+addEventListener('resize', fitCards);
+/* 名字＋注音（答對的注音標紅色） */
+function nameHTML(it, q){
+  if (settings.lang === 'en') {
+    const en = it.en || ''; const k = en.search(/[A-Za-z]/);
+    const hit = firstEn(it) === q.sym;
+    const name = hit ? `${esc(en.slice(0, k))}<em>${esc(en[k])}</em>${esc(en.slice(k + 1))}` : esc(en);
+    return `<div class="enName">${name}${it.zh ? `<small>${esc(it.zh)}</small>` : ''}</div>`;
+  }
+  const chars = [...it.zh].filter(c => !/\s/.test(c)); let zi = 0;
+  return '<div class="zrow">' + chars.map((c, i) => {
+    const hanzi = /[㐀-鿿]/.test(c), zy = hanzi ? (it.zy[zi++] || '') : '';
+    let mark = zy, on = false;
+    if (q.mode === 'start' && i === 0 && firstZy(it) === q.sym) { const k = zy.indexOf(q.sym); mark = esc(zy.slice(0, k)) + `<em>${q.sym}</em>` + esc(zy.slice(k + 1)); on = true; }
+    else if (q.mode === 'has' && zy.includes(q.sym)) { mark = zy.split(q.sym).map(esc).join(`<em>${q.sym}</em>`); on = true; }
+    else mark = esc(zy);
+    return `<span class="zc${on ? ' on' : ''}"><b>${esc(c)}</b><i>${mark || '&nbsp;'}</i></span>`;
+  }).join('') + '</div>';
+}
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function reveal(it, card){ card.querySelector('.nm').innerHTML = nameHTML(it, G.q); }
+function sayName(it){ settings.lang === 'en' ? say(it.en, 'en-US') : say(it.zh, 'zh-TW'); }
+async function choose(it, card){
+  if (!G || G.done || card.classList.contains('wrong')) return; audio();
+  const q = G.q;
+  if (it === q.ans) {
+    G.done = true; card.classList.add('right'); reveal(it, card); card.insertAdjacentHTML('beforeend', '<span class="mark">⭕</span>');
+    [...$('cards').children].forEach(c => { if (c !== card && !c.classList.contains('wrong')) c.classList.add('dim'); });
+    SFX.ok(); sayName(it);
+    const p = G.players[G.turn];
+    if (G.tries === 0) { p.score++; renderScores(); const chip = $('scores').children[G.turn]; chip.classList.add('bump'); }
+    $('foot').innerHTML = `<div class="msg">${G.tries === 0 ? '🎉 答對了！+1' : '👍 找到了！'}</div>`;
+    const nb = document.createElement('button'); nb.className = 'bigbtn'; nb.textContent = G.qn + 1 >= G.total ? '🏁 看成績' : '下一題 ➡️';
+    nb.onclick = () => { SFX.pick(); G.qn++; nextQuestion(); }; $('foot').appendChild(nb);
+  } else {
+    G.tries++; card.classList.add('wrong'); reveal(it, card); card.insertAdjacentHTML('beforeend', '<span class="mark">❌</span>');
+    SFX.bad(); sayName(it);
+    $('foot').innerHTML = `<div class="msg">再找找看！</div>`;
+  }
+}
+
+/* 暫停、結束 */
+$('pauseBtn').onclick = () => { if (G) $('pauseModal').classList.add('on'); };
+$('resumeBtn').onclick = () => $('pauseModal').classList.remove('on');
+$('finishBtn').onclick = () => { $('pauseModal').classList.remove('on'); endGame(); };
+$('homeBtn').onclick = () => goHome();
+$('muteBtn').onclick = () => { settings.sound = !settings.sound; save(); $('muteBtn').textContent = settings.sound ? '🔊' : '🔇'; };
+function goHome(){ G = null; document.querySelectorAll('.overlay').forEach(o => o.classList.remove('on')); stopConfetti(); renderHome(); show('home'); }
+function endGame(){
+  const medals = ['🥇','🥈','🥉','🎖️'], sorted = [...G.players].sort((a, b) => b.score - a.score), top = sorted[0].score;
+  const winners = sorted.filter(p => p.score === top), per = settings.rounds;
+  $('endTitle').textContent = G.players.length === 1 ? `🎉 答對 ${top} 題！` : winners.length > 1 ? '🎉 平手！大家都好棒！' : `🎉 ${winners[0].name} 贏了！`;
+  let rank = 0; $('rank').innerHTML = sorted.map((p, i) => { if (i > 0 && p.score < sorted[i - 1].score) rank = i;
+    return `<div class="rrow${rank === 0 ? ' first' : ''}" style="--pc:${p.color}"><div class="md">${medals[rank]}</div><div class="av">${p.emoji}</div><div class="nm"></div><div class="sc">${p.score} 分</div></div>`; }).join('');
+  $('rank').querySelectorAll('.nm').forEach((el, i) => el.textContent = sorted[i].name);
+  $('endMeta').textContent = `每人 ${per} 題，第一次就選對才得分`;
+  $('endModal').classList.add('on'); SFX.win(); confetti();
+}
+$('againBtn').onclick = () => { $('endModal').classList.remove('on'); stopConfetti(); startGame(); };
+$('endHomeBtn').onclick = () => goHome();
+$('startBtn').onclick = startGame;
+
+let confRAF = 0;
+function confetti(){
+  stopConfetti();
+  const cv = $('confetti'), g = cv.getContext('2d'); cv.width = innerWidth * devicePixelRatio; cv.height = innerHeight * devicePixelRatio; g.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  const cols = ['#FF5E6C','#3D8BFF','#FF7A45','#21B573','#FFC93C','#B15CFF'];
+  const ps = Array.from({length:160}, () => ({x:Math.random()*innerWidth, y:-20-Math.random()*innerHeight*.6, vx:(Math.random()-.5)*3, vy:2+Math.random()*3, r:Math.random()*6, w:8+Math.random()*8, h:5+Math.random()*6, c:cols[Math.floor(Math.random()*cols.length)], s:(Math.random()-.5)*.3}));
+  const t0 = performance.now();
+  const step = t => { g.clearRect(0,0,innerWidth,innerHeight); ps.forEach(p => { p.x+=p.vx; p.y+=p.vy; p.r+=p.s; g.save(); g.translate(p.x,p.y); g.rotate(p.r); g.fillStyle=p.c; g.fillRect(-p.w/2,-p.h/2,p.w,p.h); g.restore(); });
+    if (t - t0 < 4500) confRAF = requestAnimationFrame(step); else g.clearRect(0,0,innerWidth,innerHeight); };
+  confRAF = requestAnimationFrame(step);
+}
+function stopConfetti(){ cancelAnimationFrame(confRAF); const cv = $('confetti'); cv.getContext('2d').clearRect(0, 0, cv.width, cv.height); }
+
+/* 寶可夢圖片：加密檔，用家庭密碼打開 */
+const b64 = x => Uint8Array.from(atob(x), c => c.charCodeAt(0));
+async function decrypt(enc, pw){
+  const km = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
+  const key = await crypto.subtle.deriveKey({name:'PBKDF2', salt:b64(enc.salt), iterations:enc.iter, hash:'SHA-256'}, km, {name:'AES-GCM', length:256}, false, ['decrypt']);
+  return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM', iv:b64(enc.iv)}, key, b64(enc.data))));
+}
+let pokeFile = null;
+async function loadPoke(pw){
+  pokeState = 'loading'; renderHome();
+  try {
+    if (!pokeFile) pokeFile = await (await fetch(POKE.src)).json();
+    const data = pokeFile.enc ? await decrypt(pokeFile.enc, pw) : pokeFile;
+    pokeItems = POKE.list.filter(r => data.img[r[0]]).map(([no, zh, zy, en]) => ({ kind: 'poke', no, zh, zy: parseZy(zy), en, src: data.img[no] }));
+    pokeState = pokeItems.length ? 'ready' : 'none'; renderHome(); return true;
+  } catch(e) { pokeState = pokeFile ? 'locked' : 'error'; renderHome(); return false; }
+}
+$('pokeLock').onsubmit = async ev => {
+  ev.preventDefault(); const pw = $('pw').value; if (!pw) return; $('pwErr').textContent = '';
+  if (await loadPoke(pw)) { try { localStorage.setItem('flipgame-pw', pw); } catch(e) {} if (settings.pics === 'emoji') { settings.pics = 'mix'; save(); renderHome(); } }
+  else $('pwErr').textContent = '密碼不對喔';
+};
+renderHome(); show('home');
+if (pokeState === 'locked') { let saved = null; try { saved = localStorage.getItem('flipgame-pw'); } catch(e) {} if (saved || (POKE && POKE.plain)) loadPoke(saved || ''); }
+</script>
+</body>
+</html>
