@@ -48,7 +48,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;}
 .setting label{font-size:18px;font-weight:800;}
 .setting label small{color:var(--muted);font-weight:500;font-size:14px;}
 .note{padding:10px 14px;border-radius:14px;background:#FFF7DE;color:#7A5A00;font-size:16px;font-weight:700;line-height:1.5;}
-.pokeLock[hidden],.seg[hidden]{display:none;}
+.pokeLock[hidden],.seg[hidden],.panel[hidden],.setting[hidden]{display:none;}
 .pokeLock{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;}
 .pokeLock input{height:48px;border-radius:12px;border:2px solid var(--line);font:inherit;font-size:20px;padding:0 12px;width:180px;}
 .pokeLock button{height:48px;padding:0 18px;border-radius:12px;background:var(--accent);color:#fff;font-weight:800;font-size:18px;}
@@ -74,6 +74,8 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;}
 .sym:active{transform:scale(.95);}
 .qtext{font-size:clamp(26px,4.6vh,50px);font-weight:900;line-height:1.35;}
 .qtext .s{color:var(--accent);font-size:1.25em;padding:0 .1em;}
+.qtext{cursor:pointer;}
+.qtext .again{font-size:.6em;vertical-align:middle;opacity:.7;}
 .qtext .sub{display:block;font-size:.55em;color:var(--muted);}
 .who{display:inline-flex;align-items:center;gap:6px;color:var(--pc);}
 .cards{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;gap:clamp(12px,2.4vw,36px);padding:4px 14px;}
@@ -124,18 +126,19 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;}
   <div class="title" id="homeTitle"></div>
   <div class="subtitle" id="homeSub"></div>
   <div class="home-grid">
-    <div class="panel">
+    <div class="panel" id="playersPanel">
       <h2>🙋 誰要玩？ <small>（輪流回答）</small></h2>
       <div class="seg" id="segPlayers"></div>
       <div class="players" id="playerRows"></div>
     </div>
     <div class="panel">
+      <div class="setting"><label>🎯 玩法 <small id="modeHint"></small></label><div class="seg" id="segMode"></div></div>
       <div class="setting"><label>🔤 要玩哪一種</label><div class="seg" id="segLang"></div></div>
       <div class="setting"><label>🖼️ 圖片 <small id="pokeInfo"></small></label><div class="seg" id="segPics"></div>
         <div class="seg" id="segGens" style="margin-top:10px"></div>
         <form class="pokeLock" id="pokeLock" hidden autocomplete="off"><span>🔒 寶可夢圖片要先輸入家庭密碼：</span><input type="password" id="pw" autocapitalize="off" autocorrect="off" spellcheck="false"><button type="submit">打開</button><span id="pwErr" style="color:var(--bad);font-weight:800"></span></form></div>
       <div class="setting" id="rangeSet"><label>📚 考哪些 <small id="rangeHint"></small></label><div class="seg" id="segRange"></div></div>
-      <div class="setting"><label>🔢 每人幾題</label><div class="seg" id="segRounds"></div></div>
+      <div class="setting" id="roundsSet"><label>🔢 每人幾題</label><div class="seg" id="segRounds"></div></div>
       <div class="setting"><label>🗣️ 唸出來 <small>iPad 會唸題目和答案</small></label><div class="seg" id="segVoice"></div></div>
       <div class="setting" style="margin-bottom:0"><label>🔊 音效</label><div class="seg" id="segSound"></div></div>
     </div>
@@ -199,7 +202,7 @@ const ZY_SAY = {ㄅ:'玻',ㄆ:'坡',ㄇ:'摸',ㄈ:'佛',ㄉ:'得',ㄊ:'特',ㄋ:
 const LOOKALIKE = { ㄅ:'ㄆㄉ', ㄆ:'ㄅㄊ', ㄇ:'ㄋㄈ', ㄈ:'ㄏㄇ', ㄉ:'ㄊㄅ', ㄊ:'ㄉㄆ', ㄋ:'ㄌㄇ', ㄌ:'ㄋㄖ', ㄍ:'ㄎ', ㄎ:'ㄍㄏ', ㄏ:'ㄈㄎ', ㄐ:'ㄓㄑ', ㄑ:'ㄐㄔ', ㄒ:'ㄕㄙ', ㄓ:'ㄗㄐ', ㄔ:'ㄘㄑ', ㄕ:'ㄙㄒ', ㄖ:'ㄌ', ㄗ:'ㄓ', ㄘ:'ㄔ', ㄙ:'ㄕ', ㄧ:'ㄩ', ㄨ:'ㄩ', ㄩ:'ㄧㄨ',
   B:'DP', D:'BP', P:'BQR', Q:'PO', M:'NW', N:'MH', W:'MV', V:'WY', C:'GKS', G:'CJ', K:'CX', S:'CZ', I:'JL', J:'IG', E:'FB', F:'EP', H:'NK', L:'IT', T:'LF', O:'QC', U:'VW', R:'PB', A:'H', X:'K', Y:'V', Z:'S' };
 
-let settings = { gens: [], players: 2, lang: 'zh', pics: 'mix', range: 'all', rounds: 5, voice: true, sound: true, ucase: true };
+let settings = { mode: 'game', gens: [], players: 2, lang: 'zh', pics: 'mix', range: 'all', rounds: 5, voice: true, sound: true, ucase: true };
 let players = [0,1,2,3].map(i => ({name: DEFAULT_NAMES[i], emoji: ANIMALS[i]}));
 try { Object.assign(settings, JSON.parse(localStorage.getItem('abcgame-settings') || '{}')); } catch(e) {}
 try { const f = JSON.parse(localStorage.getItem('flipgame-settings') || 'null'); if (f && f.players) players = f.players; } catch(e) {}
@@ -263,6 +266,12 @@ function renderHome(){
     r.querySelector('input').oninput = e => { p.name = e.target.value; save(); };
     box.appendChild(r);
   }
+  const practice = settings.mode === 'practice';
+  seg($('segMode'), [['game','🏆 比賽'],['practice','📖 練習']], settings.mode, v => { settings.mode = v; save(); renderHome(); });
+  $('modeHint').textContent = practice ? (zh ? '照 ㄅㄆㄇ 順序一個一個練，不限題數' : '照 ABC 順序一個一個練，不限題數') : '輪流回答，答對得分';
+  $('playersPanel').hidden = practice; $('roundsSet').hidden = practice;
+  const hg = document.querySelector('.home-grid'); hg.style.gridTemplateColumns = practice ? 'minmax(0,760px)' : ''; hg.style.justifyContent = practice ? 'center' : '';
+  $('startBtn').textContent = practice ? '開始練習！' : '開始玩！';
   seg($('segLang'), [['zh','ㄅㄆㄇ 注音'],['en','ABC 英文']], settings.lang, v => { settings.lang = v; save(); renderHome(); });
   const pokeOK = pokeState === 'ready';
   if (!pokeOK && settings.pics !== 'emoji') settings.pics = pokeState === 'none' ? 'emoji' : settings.pics;
@@ -309,8 +318,9 @@ function matches(it, sym, mode){
 function makeQuestion(){
   const P = pool(); if (P.length < 3) return null;
   for (let tries = 0; tries < 80; tries++) {
-    if (!G.symQueue.length) G.symQueue = shuffle(symbols().slice());
-    const sym = G.symQueue.shift();
+    let sym;
+    if (G.practice) { const order = symbols(); G.pidx = (G.pidx + 1) % order.length; sym = order[G.pidx]; }   // 照 ㄅㄆㄇ／ABC 順序
+    else { if (!G.symQueue.length) G.symQueue = shuffle(symbols().slice()); sym = G.symQueue.shift(); }
     let mode = 'start';
     if (settings.lang === 'zh') mode = START_OK.has(sym) && P.some(it => firstZy(it) === sym) ? 'start' : 'has';
     const rights = P.filter(it => matches(it, sym, mode)), wrongs = P.filter(it => !matches(it, sym, mode));
@@ -325,6 +335,7 @@ function makeQuestion(){
     for (const it of others) { if (ds.length >= 2) break; if (!ds.includes(it)) ds.push(it); }
     if (ds.length < 2) continue;
     G.used.add(ans); ds.forEach(d => G.used.add(d));
+    if (G.used.size > P.length * .7) G.used.clear();
     return { sym, mode, ans, opts: shuffle([ans, ...ds]) };
   }
   return null;
@@ -344,8 +355,10 @@ async function startGame(){
       $('loading').classList.remove('on'); }
   }
   if (pool().length < 3) { alert('圖片不夠，至少要 3 張'); return; }
-  const ps = players.slice(0, settings.players).map((p, i) => ({name: (p.name || '').trim() || DEFAULT_NAMES[i], emoji: p.emoji, color: TEAM_COLORS[i], score: 0}));
-  G = { players: ps, turn: 0, qn: 0, total: settings.rounds * ps.length, symQueue: [], used: new Set(), q: null, tries: 0, done: false };
+  const practice = settings.mode === 'practice';
+  const ps = practice ? [{name: '練習', emoji: '📖', color: 'var(--p1)', score: 0}]
+    : players.slice(0, settings.players).map((p, i) => ({name: (p.name || '').trim() || DEFAULT_NAMES[i], emoji: p.emoji, color: TEAM_COLORS[i], score: 0}));
+  G = { practice, pidx: -1, players: ps, turn: 0, qn: 0, total: practice ? Infinity : settings.rounds * ps.length, symQueue: [], used: new Set(), q: null, tries: 0, done: false };
   $('muteBtn').textContent = settings.sound ? '🔊' : '🔇';
   show('game'); nextQuestion();
 }
@@ -359,10 +372,12 @@ function nextQuestion(){
   if (G.qn >= G.total) return endGame();
   const q = makeQuestion(); if (!q) return endGame();
   G.q = q; G.tries = 0; G.done = false; G.turn = G.qn % G.players.length;
-  renderScores(); $('round').textContent = `第 ${G.qn + 1} / ${G.total} 題`;
+  renderScores();
+  if (G.practice) { const order = symbols(); $('round').textContent = `📖 ${showSym(q.sym)}（${order.indexOf(q.sym) + 1} / ${order.length}）`; }
+  else $('round').textContent = `第 ${G.qn + 1} / ${G.total} 題`;
   const p = G.players[G.turn], S = showSym(q.sym);
   $('sym').innerHTML = `${S}<small>🔊</small>`;
-  const who = G.players.length > 1 ? `<span class="who" style="--pc:${p.color}">${p.emoji} <span class="pn"></span></span>，` : '';
+  const who = G.players.length > 1 && !G.practice ? `<span class="who" style="--pc:${p.color}">${p.emoji} <span class="pn"></span></span>，` : '';
   $('qtext').innerHTML = settings.lang === 'en'
     ? `${who}哪一個是 <span class="s">${S}</span> 開頭？<span class="sub">Which one starts with “${S}”?</span>`
     : q.mode === 'start' ? `${who}誰的名字是 <span class="s">${S}</span> 開頭？` : `${who}誰的名字裡有 <span class="s">${S}</span>？`;
@@ -373,10 +388,18 @@ function nextQuestion(){
     c.innerHTML = `<div class="pic">${it.kind === 'emoji' ? it.ch : `<img src="${it.src}" alt="">`}</div><div class="nm"><span class="q">？</span></div>`;
     c.onclick = () => choose(it, c); box.appendChild(c);
   });
-  $('foot').innerHTML = ''; fitCards(); speakSym();
+  $('qtext').insertAdjacentHTML('beforeend', ' <span class="again">🔊</span>');
+  $('foot').innerHTML = ''; fitCards(); speakQuestion();
 }
-function speakSym(){ const q = G && G.q; if (!q) return; settings.lang === 'en' ? say(q.sym, 'en-US') : say(ZY_SAY[q.sym] || q.sym, 'zh-TW'); }
-$('sym').onclick = () => { audio(); speakSym(); };
+/* 念題目：點大字或題目文字都可以再聽一次 */
+function speakQuestion(){
+  const q = G && G.q; if (!q) return;
+  if (settings.lang === 'en') return say(`Which one starts with ${q.sym}?`, 'en-US');
+  const r = ZY_SAY[q.sym] || q.sym;
+  say(q.mode === 'start' ? `${r}。誰的名字是，${r}，開頭？` : `${r}。誰的名字裡有，${r}？`, 'zh-TW');
+}
+$('sym').onclick = () => { audio(); speakQuestion(); };
+$('qtext').onclick = () => { audio(); speakQuestion(); };
 function fitCards(){
   if (!$('game').classList.contains('on')) return;
   const box = $('cards'), w = box.clientWidth - 28, h = box.clientHeight - 16, gap = Math.min(36, Math.max(12, innerWidth * .024));
@@ -404,9 +427,18 @@ function nameHTML(it, q){
 }
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function reveal(it, card){ card.querySelector('.nm').innerHTML = nameHTML(it, G.q); }
-function sayName(it){ settings.lang === 'en' ? say(it.en, 'en-US') : say(it.zh, 'zh-TW'); }
+/* 注音模式：每個字先拼讀（ㄅ、ㄠ、暴），最後再念整個名字 */
+function spellText(it){
+  const chars = [...it.zh].filter(c => /[\u3400-\u9fff]/.test(c));
+  const parts = chars.map((c, i) => { const zy = (it.zy[i] || '').replace(/[ˊˇˋ˙]/g, '');
+    return [...zy].map(z => ZY_SAY[z] || z).join('，') + '，' + c; });
+  return parts.join('。') + '。' + it.zh.replace(/[^\u3400-\u9fff]/g, '');
+}
+function sayName(it){ settings.lang === 'en' ? say(it.en, 'en-US') : say(spellText(it), 'zh-TW'); }
 async function choose(it, card){
-  if (!G || G.done || card.classList.contains('wrong')) return; audio();
+  if (!G) return; audio();
+  if (card.classList.contains('wrong') || card.classList.contains('right')) return sayName(it);   // 已經翻開的再點一下：再念一次
+  if (G.done) return;
   const q = G.q;
   if (it === q.ans) {
     G.done = true; card.classList.add('right'); reveal(it, card); card.insertAdjacentHTML('beforeend', '<span class="mark">⭕</span>');
@@ -414,8 +446,10 @@ async function choose(it, card){
     SFX.ok(); sayName(it);
     const p = G.players[G.turn];
     if (G.tries === 0) { p.score++; renderScores(); const chip = $('scores').children[G.turn]; chip.classList.add('bump'); }
-    $('foot').innerHTML = `<div class="msg">${G.tries === 0 ? '🎉 答對了！+1' : '👍 找到了！'}</div>`;
-    const nb = document.createElement('button'); nb.className = 'bigbtn'; nb.textContent = G.qn + 1 >= G.total ? '🏁 看成績' : '下一題 ➡️';
+    $('foot').innerHTML = `<div class="msg">${G.tries === 0 ? (G.practice ? '🎉 答對了！' : '🎉 答對了！+1') : '👍 找到了！'}</div>`;
+    if (G.practice) { const rb = document.createElement('button'); rb.className = 'btn2'; rb.textContent = '🔁 這個再練一次';
+      rb.onclick = () => { SFX.pick(); G.pidx = (G.pidx - 1 + symbols().length) % symbols().length; G.qn++; nextQuestion(); }; $('foot').appendChild(rb); }
+    const nb = document.createElement('button'); nb.className = 'bigbtn'; nb.textContent = G.qn + 1 >= G.total ? '🏁 看成績' : G.practice ? '下一個 ➡️' : '下一題 ➡️';
     nb.onclick = () => { SFX.pick(); G.qn++; nextQuestion(); }; $('foot').appendChild(nb);
   } else {
     G.tries++; card.classList.add('wrong'); reveal(it, card); card.insertAdjacentHTML('beforeend', '<span class="mark">❌</span>');
@@ -428,12 +462,20 @@ async function choose(it, card){
 $('pauseBtn').onclick = () => { if (G) $('pauseModal').classList.add('on'); };
 $('resumeBtn').onclick = () => $('pauseModal').classList.remove('on');
 $('finishBtn').onclick = () => { $('pauseModal').classList.remove('on'); endGame(); };
+document.addEventListener('visibilitychange', () => { if (document.hidden && window.speechSynthesis) speechSynthesis.cancel(); });
 $('homeBtn').onclick = () => goHome();
 $('muteBtn').onclick = () => { settings.sound = !settings.sound; save(); $('muteBtn').textContent = settings.sound ? '🔊' : '🔇'; };
 function goHome(){ G = null; document.querySelectorAll('.overlay').forEach(o => o.classList.remove('on')); stopConfetti(); renderHome(); show('home'); }
 function endGame(){
   const medals = ['🥇','🥈','🥉','🎖️'], sorted = [...G.players].sort((a, b) => b.score - a.score), top = sorted[0].score;
   const winners = sorted.filter(p => p.score === top), per = settings.rounds;
+  if (G.practice) {
+    const n = G.qn + (G.done ? 1 : 0), ok = G.players[0].score;
+    $('endTitle').textContent = '📖 練習結束，好棒！';
+    $('rank').innerHTML = `<div class="rrow first" style="--pc:var(--p1)"><div class="md">📖</div><div class="av">⭐</div><div class="nm">練習了 ${n} 題</div><div class="sc">一次就對 ${ok} 題</div></div>`;
+    $('endMeta').textContent = '下次可以從頭再練一次喔';
+    $('endModal').classList.add('on'); SFX.win(); confetti(); return;
+  }
   $('endTitle').textContent = G.players.length === 1 ? `🎉 答對 ${top} 題！` : winners.length > 1 ? '🎉 平手！大家都好棒！' : `🎉 ${winners[0].name} 贏了！`;
   let rank = 0; $('rank').innerHTML = sorted.map((p, i) => { if (i > 0 && p.score < sorted[i - 1].score) rank = i;
     return `<div class="rrow${rank === 0 ? ' first' : ''}" style="--pc:${p.color}"><div class="md">${medals[rank]}</div><div class="av">${p.emoji}</div><div class="nm"></div><div class="sc">${p.score} 分</div></div>`; }).join('');

@@ -28,6 +28,9 @@ a.game:active{transform:translateY(5px);box-shadow:0 3px 0 var(--line)}
 .reload:active{transform:translateY(4px);box-shadow:0 2px 0 var(--line)}
 .ver{margin-top:10px;font-size:13px;color:#BBA78A}
 .updating{position:fixed;inset:0;background:rgba(255,246,233,.92);display:none;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:var(--accent);z-index:9}
+.offline{display:none;margin-top:28px;padding:14px 22px;border-radius:20px;background:#fff;font-size:19px;font-weight:800;box-shadow:0 5px 0 var(--line);text-align:center;width:min(560px,100%)}
+.offline .bar{height:12px;border-radius:6px;background:#F6E6D2;margin-top:10px;overflow:hidden}
+.offline .bar i{display:block;height:100%;background:var(--accent);border-radius:6px;transition:width .3s}
 </style>
 </head>
 <body>
@@ -48,12 +51,13 @@ a.game:active{transform:translateY(5px);box-shadow:0 3px 0 var(--line)}
   <a class="game" href="draw/"><div class="ico">🎨</div><div class="nm">我畫你猜</div><div class="ds">小朋友看題目畫出來，爸媽來猜，最後對照原圖</div></a>
   <a class="game" href="abc/"><div class="ico">🔤</div><div class="nm">注音找找看</div><div class="ds">看注音或英文字母，找出名字是它開頭的寶可夢或東西</div></a>
 </div>
+<div class="offline" id="offline"></div>
 <button class="reload" id="reloadBtn">🔄 重新載入（有新遊戲時按這裡）</button>
 <div class="ver" id="ver"></div>
 <div class="updating" id="updating">✨ 有新版本，更新中…</div>
 <script>
 // 網站版本：每次打包自動更新（加到主畫面的 App 會用這個判斷要不要重新載入）
-const SITE_VERSION = '06933cc7';
+const SITE_VERSION = '7bd7a921';
 const reloadFresh = v => location.replace(location.pathname + '?v=' + (v || Date.now()));
 document.getElementById('reloadBtn').onclick = () => reloadFresh();
 document.getElementById('ver').textContent = '版本 ' + SITE_VERSION;
@@ -67,6 +71,26 @@ fetch('version.json?t=' + Date.now(), {cache: 'no-store'}).then(r => r.json()).t
     document.getElementById('updating').style.display = 'flex'; setTimeout(() => reloadFresh(d.v), 600);
   }
 }).catch(() => {});
+// 離線功能：有網路時把全部遊戲、照片、寶可夢存到 iPad，沒網路也能玩
+(function(){
+  const box = document.getElementById('offline');
+  const msg = html => { box.style.display = 'block'; box.innerHTML = html; };
+  if (!('serviceWorker' in navigator)) return;
+  let ready = false; try { ready = localStorage.getItem('offline-ready') === SITE_VERSION; } catch(e) {}
+  const okMsg = () => msg('✅ 遊戲都存在 iPad 裡了，沒有網路也能玩');
+  if (ready) okMsg(); else if (!navigator.onLine) msg('📴 現在沒有網路，連上網路後打開這頁，就會開始存到 iPad');
+  navigator.serviceWorker.addEventListener('message', e => { const d = e.data || {};
+    if (d.type === 'offline-progress' && !ready)
+      msg(`📥 正在存到 iPad，讓沒網路也能玩…　${Math.round(d.doneMB)} / ${Math.round(d.totalMB)} MB<div class="bar"><i style="width:${Math.round(d.done / d.total * 100)}%"></i></div><div style="font-size:14px;color:var(--muted);margin-top:6px">第一次比較久，請先不要關掉這頁</div>`);
+    if (d.type === 'offline-ready' && d.version === SITE_VERSION) { ready = true; try { localStorage.setItem('offline-ready', d.version); } catch(e) {} okMsg(); }
+    if (d.type === 'offline-error' && !ready) msg(`⚠️ 還有 ${d.failed} 個檔案沒存好，連上網路後再打開這頁就會繼續`);
+  });
+  navigator.serviceWorker.register('sw.js', {updateViaCache: 'none'}).then(() => navigator.serviceWorker.ready).then(reg => {
+    const go = () => { const w = navigator.serviceWorker.controller || reg.active; if (w) w.postMessage('prepare'); };
+    go(); navigator.serviceWorker.addEventListener('controllerchange', go);
+  }).catch(() => {});
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+})();
 </script>
 </body>
 </html>
